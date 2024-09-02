@@ -29,44 +29,25 @@ export abstract class Command {
         this._duration = value;
     }
 
-    onComplete?: () => void;
+    /**
+     * 下一个命令
+     */
+    private _nextCommand: Command;
+    public get nextCommand(): Command {
+        return this._nextCommand;
+    }
+    public set nextCommand(value: Command) {
+        this._nextCommand = value;
+    }
 
     abstract execute(): void;
 
     complete(): void {
         this.isFinished = true;
-        if (this.onComplete) {
-            this.onComplete();
+        if (this.nextCommand) {
+            this.nextCommand.execute();
         }
     }
-}
-
-export class CommandQueue {
-
-    private _command: Command[] = [];
-    private _currentCommandIndex: number = 0;
-
-    addCommand(command: Command) {
-        if (command) {
-            this._command.push(command);
-        }
-    }
-
-    execute(): void {
-        this._executeNextCommand();
-    }
-
-    private _executeNextCommand() {
-        if (this._currentCommandIndex < this._command.length) {
-            const command = this._command[this._currentCommandIndex];
-            command.onComplete = () => {
-                this._currentCommandIndex++;
-                this._executeNextCommand();
-            }
-            command.execute();
-        }
-    }
-
 }
 
 export class MoveCommand extends Command {
@@ -176,7 +157,7 @@ export class AttackCommand extends Command {
         this.defender = denfender;
         this.damage = damage;
         this.damageNode = damageNode;
-        this.duration = this.attacker.stateMachine.getAnimationDuration(States.ATTACKING);
+        this.duration = this.attacker.stateMachine.getAnimationDuration(States.ATTACKING) * 0.5;
     }
 
     execute(): void {
@@ -191,14 +172,12 @@ export class AttackCommand extends Command {
             const isDead = (this.defender.actor.hp - this.damage) <= 0;
             if (!isDead) {
                 const hurtCommand = new HurtCommand(this.defender, this.damageNode, this.damage);
-                this.defender.scheduleOnce(() => {
-                    hurtCommand.execute();
-                }, this.duration * 0.5)
+                hurtCommand.nextCommand = this.nextCommand;
+                this.nextCommand = hurtCommand;
             } else {
                 const deadCommand = new DeadCommand(this.defender, this.damageNode);
-                this.defender.scheduleOnce(() => {
-                    deadCommand.execute();
-                }, this.duration * 0.5)
+                deadCommand.nextCommand = this.nextCommand;
+                this.nextCommand = deadCommand;
             }
 
             this.attacker.scheduleOnce(() => {

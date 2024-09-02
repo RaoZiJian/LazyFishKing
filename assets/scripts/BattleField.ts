@@ -4,7 +4,7 @@ import { Constants, LazyFishId, RES_URL } from './Constants';
 import { Utils } from './Utils';
 import { Mediator } from './mediator/Mediator';
 import { AttackType } from './Actor/Actor';
-import { AttackCommand, BulletFireCommnad, CommandQueue, MainSkillCastCommand, MoveCommand, ShootingCommand } from './Command/Command';
+import { AttackCommand, BulletFireCommnad, Command, CommandQueue, MainSkillCastCommand, MoveCommand, ShootingCommand } from './Command/Command';
 import { ShootingMediator } from './mediator/ShootingMediator';
 import { BuffNode } from './BuffNode';
 const { ccclass, property } = _decorator;
@@ -199,10 +199,9 @@ export class BattleField extends Component {
         const isAttackerLeft = this.isActorFromLeft(attacker);
         let defender: Mediator = isAttackerLeft ? this.getNextDefender(this.rightFishes) : this.getNextDefender(this.leftFishes);
 
-        let commandQueue = new CommandQueue();
         const startPosition = new Vec3(attacker.node.worldPosition.x, attacker.node.worldPosition.y, attacker.node.worldPosition.z);
-        let duration = 0;
         const damageNode = instantiate(this.damagePrefab);
+        let headCommand: Command;
 
         if (this.isCanSkill(attacker)) {
             const id = attacker.actor.cfg?.MainSkill;
@@ -218,22 +217,17 @@ export class BattleField extends Component {
 
             if (skillCfg.shouldMove == 1) {
                 const skillCommand = new MainSkillCastCommand(attacker, targets, id, damageNode, buffNode);
-                commandQueue.addCommand(skillCommand);
-                duration += skillCommand.duration;
+                headCommand = skillCommand;
             } else {
                 const skillCommand = new MainSkillCastCommand(attacker, targets, id, damageNode, buffNode);
                 const moveTarget = skillCommand.getMoveTarget();
-
                 const targePostion = new Vec3(moveTarget.node.worldPosition.x + moveTarget.getModelWidth() * moveTarget.isReverse, moveTarget.node.worldPosition.y, moveTarget.node.worldPosition.z);
                 const move = new MoveCommand(attacker, targePostion, Constants.MoveDuration);
                 const moveBack = new MoveCommand(attacker, startPosition, Constants.MoveDuration);
 
-                commandQueue.addCommand(move);
-                commandQueue.addCommand(skillCommand);
-                commandQueue.addCommand(moveBack);
-                duration += move.duration;
-                duration += skillCommand.duration;
-                duration += moveBack.duration;
+                move.nextCommand = skillCommand;
+                skillCommand.nextCommand = moveBack;
+                headCommand = move;
             }
 
         } else {
@@ -246,28 +240,24 @@ export class BattleField extends Component {
                 const move = new MoveCommand(attacker, targePostion, Constants.MoveDuration);
                 const attack = new AttackCommand(attacker, defender, damageNode);
                 const moveBack = new MoveCommand(attacker, startPosition, Constants.MoveDuration);
-                commandQueue.addCommand(move);
-                duration += move.duration;
-                commandQueue.addCommand(attack);
-                duration += attack.duration;
-                commandQueue.addCommand(moveBack);
-                duration += moveBack.duration;
-
+                move.nextCommand = attack;
+                attack.nextCommand = moveBack;
+                headCommand = move;
             } else if (attackType == AttackType.Shooting) {
                 let shootingMediator = attacker as ShootingMediator;
                 let bullet = shootingMediator.cloneArrow();
                 if (bullet) {
                     const shootingCommand = new ShootingCommand(attacker, defender);
-                    duration += shootingCommand.duration;
                     const bulletFireCommnad = new BulletFireCommnad(bullet, attacker, defender, Constants.ShootingDuration, damageNode);
-                    duration += bulletFireCommnad.duration;
-                    commandQueue.addCommand(shootingCommand);
-                    commandQueue.addCommand(bulletFireCommnad);
+                    shootingCommand.nextCommand = bulletFireCommnad;
+                    headCommand = shootingCommand;
                 }
             }
         }
 
-        commandQueue.execute();
+        if (headCommand) {
+            headCommand.execute();
+        }
 
         this.scheduleOnce(() => {
             if (this.checkGameover()) {
