@@ -50,6 +50,28 @@ export abstract class Command {
     }
 }
 
+export class EndTurnCoomand extends Command {
+
+    private _callback: () => void;
+    public get callback(): () => void {
+        return this._callback;
+    }
+    public set callback(value: () => void) {
+        this._callback = value;
+    }
+
+    constructor(e: () => void) {
+        super();
+        this.callback = e;
+    }
+
+    execute(): void {
+        if (this.callback) {
+            this.callback();
+        }
+    }
+}
+
 export class MoveCommand extends Command {
 
     private _target: Mediator;
