@@ -21,5 +21,7 @@ export const RES_URL = {
     explosionUrl: "effects/explosion/explosion",
     damageResources: "effects/Damage",
     buffUrl: "effects/buff/BuffNode",
-    tauntAudio:"fishes/Audios/taunt"
+    tauntAudio:"fishes/Audios/taunt",
+    clickEffect:"effects/click/clickEffect",
+    clickBullet:"effects/clickBullet/clickBullet"
 }
