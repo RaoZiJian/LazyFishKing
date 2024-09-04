@@ -7,6 +7,7 @@ import { AttackType } from './Actor/Actor';
 import { AttackCommand, BulletFireCommnad, Command, EndTurnCoomand, MainSkillCastCommand, MoveCommand, ShootingCommand } from './Command/Command';
 import { ShootingMediator } from './mediator/ShootingMediator';
 import { BuffNode } from './BuffNode';
+import { FireAreaFiled } from './FireAreaFiled';
 const { ccclass, property } = _decorator;
 
 @ccclass('BattleField')
@@ -20,6 +21,9 @@ export class BattleField extends Component {
 
     @property(Node)
     Loading: Node;
+
+    @property(FireAreaFiled)
+    fireAreaField:FireAreaFiled;
 
     private _leftFishes: Mediator[] = [];
     public get leftFishes(): Mediator[] {
@@ -317,7 +321,7 @@ export class BattleField extends Component {
         this._allPrefabCount = 5;
         this._isBattleBegin = false;
         this.initEnemyFishes();
-
+        this.fireAreaField.closeFire();
     }
 
     update(deltaTime: number) {
@@ -325,6 +329,7 @@ export class BattleField extends Component {
             this._isBattleBegin = true;
             this.Loading.getComponent(UIOpacity).opacity = 0;
             this.battleLoop(([...this.leftFishes, ...this.rightFishes]));
+            this.fireAreaField.openFire();
         }
     }
 }
