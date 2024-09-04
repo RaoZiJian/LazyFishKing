@@ -26,6 +26,9 @@ export class Mediator extends Component {
     @property(AudioSource)
     audio: AudioSource;
 
+    @property(Node)
+    Model:Node;
+
     private _uiOpacity: UIOpacity;
     /**
      * 透明度控件

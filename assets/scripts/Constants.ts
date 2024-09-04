@@ -14,7 +14,8 @@ export const Constants = {
     testMyFishCount: 5,
     rageAdd: 50,
     maxRage: 100,
-    clickBulletFlyTime:0.3,
+    clickBulletFlyTime: 0.3,
+    clickBulletDamage: 5,
 }
 
 export const RES_URL = {
@@ -22,7 +23,7 @@ export const RES_URL = {
     explosionUrl: "effects/explosion/explosion",
     damageResources: "effects/Damage",
     buffUrl: "effects/buff/BuffNode",
-    tauntAudio:"fishes/Audios/taunt",
-    clickEffect:"effects/click/clickEffect",
-    clickBullet:"effects/clickBullet/clickBullet"
+    tauntAudio: "fishes/Audios/taunt",
+    clickEffect: "effects/click/clickEffect",
+    clickBullet: "effects/clickBullet/clickBullet"
 }

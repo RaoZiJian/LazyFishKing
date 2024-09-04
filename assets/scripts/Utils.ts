@@ -23,13 +23,15 @@ export class Utils {
     }
 
     static getNextDefender(targets: Mediator[]) {
-        let aliveActors = this.getAliveActors(targets);
-        const sortedActors = aliveActors.sort((a, b) => {
-            return b.actor.taunt - a.actor.taunt;
-        })
-
-        if (sortedActors) {
-            return sortedActors[0];
+        if(targets && targets.length>0){
+            let aliveActors = this.getAliveActors(targets);
+            const sortedActors = aliveActors.sort((a, b) => {
+                return b.actor.taunt - a.actor.taunt;
+            })
+    
+            if (sortedActors) {
+                return sortedActors[0];
+            }
         }
     }
 }

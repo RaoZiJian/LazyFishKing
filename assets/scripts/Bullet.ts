@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Vec3 } from 'cc';
+import { _decorator, Component, Node, Vec3, tween } from 'cc';
 import { Mediator } from './mediator/Mediator';
 const { ccclass, property } = _decorator;
 
@@ -36,6 +36,19 @@ export class Bullet extends Component {
             let angle = Math.atan2(direction.y, direction.x);
             this.bullet.angle = angle * (180 / Math.PI);
         }
+    }
+
+    fire(target:Mediator, duration:number, isReverse:number, callback:()=>void) {
+        this.isReverse = isReverse;
+        this.target = target;
+        tween(this.bullet)
+            .to(duration, { worldPosition: this.target.model.worldPosition })
+            .call(() => {
+                if(callback){
+                    callback();
+                }
+            })
+            .start();
     }
 
     start() {

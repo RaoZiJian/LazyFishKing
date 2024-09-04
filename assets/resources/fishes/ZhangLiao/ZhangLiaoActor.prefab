@@ -95,7 +95,8 @@
     "fileId": "8el9i6kfpEnqh+/jgbKfWj",
     "instance": {
       "__id__": 4
-    }
+    },
+    "targetOverrides": null
   },
   {
     "__type__": "cc.PrefabInstance",
@@ -562,6 +563,9 @@
     },
     "audio": {
       "__id__": 41
+    },
+    "Model": {
+      "__id__": 2
     },
     "_id": ""
   },

@@ -419,41 +419,34 @@ export class BulletFireCommnad extends Command {
         canvas.addChild(this.bullet);
         this.bullet.worldPosition = this.attacker.node.worldPosition;
         const bulletComponent = this.bullet.getComponent(Bullet);
-        bulletComponent.isReverse = this.attacker.isReverse;
-        bulletComponent.target = this.target;
+        bulletComponent.fire(this.target, this.duration - 0.1, this.attacker.isReverse, () => {
+            this.bullet.removeFromParent();
+            this.attacker.changeState(States.IDLE);
 
-        tween(this.bullet)
-            .to(this.duration - 0.1, { worldPosition: this.target.node.worldPosition })
-            .call(() => {
-                this.bullet.removeFromParent();
-                this.attacker.changeState(States.IDLE);
+            if (this.damage == undefined) {
+                this.damage = this.attacker.actor.attack - this.target.actor.denfence;
+            }
+            this.damage = this.damage > 0 ? this.damage : 1;
+            const currentRage: number = this.attacker.getRage() + Constants.rageAdd;
+            this.attacker.setRage(currentRage >= 100 ? 100 : currentRage);
+            const isDead = (this.target.actor.hp - this.damage) <= 0;
+            if (!isDead) {
+                const hurtCommand = new HurtCommand(this.target, this.damageNode, this.damage);
+                hurtCommand.execute();
+            } else {
+                const deadCommand = new DeadCommand(this.target, this.damageNode);
+                deadCommand.execute();
+            }
 
-                if (this.damage == undefined) {
-                    this.damage = this.attacker.actor.attack - this.target.actor.denfence;
+            resources.load(RES_URL.explosionUrl, Prefab, (error, prefab) => {
+                if (prefab) {
+                    let explosionNode = instantiate(prefab);
+                    const explosion = new BulletFireExplosion(explosionNode, this.target);
+                    explosion.execute();
                 }
-                this.damage = this.damage > 0 ? this.damage : 1;
-                const currentRage: number = this.attacker.getRage() + Constants.rageAdd;
-                this.attacker.setRage(currentRage >= 100 ? 100 : currentRage);
-                const isDead = (this.target.actor.hp - this.damage) <= 0;
-                if (!isDead) {
-                    const hurtCommand = new HurtCommand(this.target, this.damageNode, this.damage);
-                    hurtCommand.execute();
-                } else {
-                    const deadCommand = new DeadCommand(this.target, this.damageNode);
-                    deadCommand.execute();
-                }
-
-                resources.load(RES_URL.explosionUrl, Prefab, (error, prefab) => {
-                    if (prefab) {
-                        let explosionNode = instantiate(prefab);
-                        const explosion = new BulletFireExplosion(explosionNode, this.target);
-                        explosion.execute();
-                    }
-                })
-
-                this.complete();
             })
-            .start();
+            this.complete();
+        })
     }
 }
 

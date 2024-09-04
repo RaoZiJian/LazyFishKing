@@ -3,6 +3,7 @@ import { Constants, RES_URL } from './Constants';
 import { Mediator } from './mediator/Mediator';
 import { Utils } from './Utils';
 import { Bullet } from './Bullet';
+import { BulletFireExplosion, DeadCommand, HurtCommand } from './Command/Command';
 const { ccclass, property } = _decorator;
 
 @ccclass('FireAreaFiled')
@@ -60,13 +61,32 @@ export class FireAreaFiled extends Component {
         this.node.on(NodeEventType.MOUSE_DOWN, (event) => {
 
             const clickPosition = new Vec3(event.getUILocation().x, event.getUILocation().y, this.clickNode.worldPosition.z);
-            const bullet = instantiate(this.clickBulletPrefab);
-            this.canvas.addChild(bullet);
-            bullet.worldPosition = clickPosition;
             const defender = Utils.getNextDefender(targets);
-            tween(bullet)
-                .to(Constants.clickBulletFlyTime, { worldPosition: defender.node.worldPosition })
-                .start();
+            if(defender){
+                const bullet = instantiate(this.clickBulletPrefab);
+                this.canvas.addChild(bullet);
+                bullet.worldPosition = clickPosition;
+                bullet.getComponent(Bullet).fire(defender, Constants.clickBulletFlyTime, 1, ()=>{
+                    
+                    const isDead = (defender.actor.hp - Constants.clickBulletDamage) <= 0;
+                    if (!isDead) {
+                        const hurtCommand = new HurtCommand(defender, this.damageNode, Constants.clickBulletDamage);
+                        hurtCommand.execute();
+                    } else {
+                        const deadCommand = new DeadCommand(defender, this.damageNode);
+                        deadCommand.execute();
+                    }
+        
+                    resources.load(RES_URL.explosionUrl, Prefab, (error, prefab) => {
+                        if (prefab) {
+                            let explosionNode = instantiate(prefab);
+                            const explosion = new BulletFireExplosion(explosionNode, this.target);
+                            explosion.execute();
+                        }
+                    })
+
+                });
+            }
 
             this.clickNode.getComponent(Animation).play();
             this.clickNode.worldPosition = clickPosition;
