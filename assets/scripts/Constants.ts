@@ -9,11 +9,12 @@ export const LazyFishId = {
 }
 
 export const Constants = {
-    MoveDuration: 1,
-    ShootingDuration: 1,
+    moveDuration: 1,
+    shootingDuration: 1,
     testMyFishCount: 5,
     rageAdd: 50,
     maxRage: 100,
+    clickBulletFlyTime:0.3,
 }
 
 export const RES_URL = {

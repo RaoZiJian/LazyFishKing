@@ -1,3 +1,5 @@
+import { Mediator } from "./mediator/Mediator";
+
 export class Utils {
     static parseString(input): (number | string)[] {
 
@@ -13,6 +15,21 @@ export class Utils {
             return parts.map(part => Number(part));
         } else {
             return parts;
+        }
+    }
+
+    static getAliveActors(targets: Mediator[]) {
+        return targets.filter(actor => actor.isAlive == true);
+    }
+
+    static getNextDefender(targets: Mediator[]) {
+        let aliveActors = this.getAliveActors(targets);
+        const sortedActors = aliveActors.sort((a, b) => {
+            return b.actor.taunt - a.actor.taunt;
+        })
+
+        if (sortedActors) {
+            return sortedActors[0];
         }
     }
 }

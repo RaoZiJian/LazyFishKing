@@ -142,25 +142,10 @@ export class BattleField extends Component {
         this.initEffectsResource();
     }
 
-    getAliveActors(targets: Mediator[]) {
-        return targets.filter(actor => actor.isAlive == true);
-    }
-
     getNextActionActor(targets: Mediator[]) {
-        let aliveActors = this.getAliveActors(targets);
+        let aliveActors = Utils.getAliveActors(targets);
         const sortedActors = aliveActors.sort((a, b) => {
             return b.actor.speed - a.actor.speed;
-        })
-
-        if (sortedActors) {
-            return sortedActors[0];
-        }
-    }
-
-    getNextDefender(targets: Mediator[]) {
-        let aliveActors = this.getAliveActors(targets);
-        const sortedActors = aliveActors.sort((a, b) => {
-            return b.actor.taunt - a.actor.taunt;
         })
 
         if (sortedActors) {
@@ -201,7 +186,7 @@ export class BattleField extends Component {
             return;
         }
         const isAttackerLeft = this.isActorFromLeft(attacker);
-        let defender: Mediator = isAttackerLeft ? this.getNextDefender(this.rightFishes) : this.getNextDefender(this.leftFishes);
+        let defender: Mediator = isAttackerLeft ? Utils.getNextDefender(this.rightFishes) : Utils.getNextDefender(this.leftFishes);
 
         const startPosition = new Vec3(attacker.node.worldPosition.x, attacker.node.worldPosition.y, attacker.node.worldPosition.z);
         const damageNode = instantiate(this.damagePrefab);
@@ -210,7 +195,7 @@ export class BattleField extends Component {
             if (this.checkGameover()) {
                 //todo game over
             } else {
-                const rightAliveFishes = this.getAliveActors(this.rightFishes);
+                const rightAliveFishes = Utils.getAliveActors(this.rightFishes);
                 if (rightAliveFishes && rightAliveFishes.length == 0) {
                     if (this.hasNextStage()) {
                         this.gotoNextStage();
@@ -218,9 +203,9 @@ export class BattleField extends Component {
                         // todo game win
                     }
                 } else {
-                    this.leftFishes = this.getAliveActors(this.leftFishes);
-                    this.rightFishes = this.getAliveActors(this.rightFishes);
-                    targets = this.getAliveActors(targets);
+                    this.leftFishes = Utils.getAliveActors(this.leftFishes);
+                    this.rightFishes = Utils.getAliveActors(this.rightFishes);
+                    targets = Utils.getAliveActors(targets);
                     targets = targets.filter(fish => fish.actor.uuId != attacker.actor.uuId);
                     if (targets.length > 0) {
                         this.battleLoop(targets);
@@ -251,8 +236,8 @@ export class BattleField extends Component {
                 const skillCommand = new MainSkillCastCommand(attacker, targets, id, damageNode, buffNode);
                 const moveTarget = skillCommand.getMoveTarget();
                 const targePostion = new Vec3(moveTarget.node.worldPosition.x + moveTarget.getModelWidth() * moveTarget.isReverse, moveTarget.node.worldPosition.y, moveTarget.node.worldPosition.z);
-                const move = new MoveCommand(attacker, targePostion, Constants.MoveDuration);
-                const moveBack = new MoveCommand(attacker, startPosition, Constants.MoveDuration);
+                const move = new MoveCommand(attacker, targePostion, Constants.moveDuration);
+                const moveBack = new MoveCommand(attacker, startPosition, Constants.moveDuration);
 
                 move.nextCommand = skillCommand;
                 skillCommand.nextCommand = moveBack;
@@ -267,9 +252,9 @@ export class BattleField extends Component {
             } else if (attackType == AttackType.MeleeAttack) {
 
                 const targePostion = new Vec3(defender.node.worldPosition.x + defender.getModelWidth() * defender.isReverse, defender.node.worldPosition.y, defender.node.worldPosition.z);
-                const move = new MoveCommand(attacker, targePostion, Constants.MoveDuration);
+                const move = new MoveCommand(attacker, targePostion, Constants.moveDuration);
                 const attack = new AttackCommand(attacker, defender, damageNode);
-                const moveBack = new MoveCommand(attacker, startPosition, Constants.MoveDuration);
+                const moveBack = new MoveCommand(attacker, startPosition, Constants.moveDuration);
                 move.nextCommand = attack;
                 moveBack.nextCommand = endCommand;
                 attack.nextCommand = moveBack;
@@ -279,7 +264,7 @@ export class BattleField extends Component {
                 let bullet = shootingMediator.cloneArrow();
                 if (bullet) {
                     const shootingCommand = new ShootingCommand(attacker, defender);
-                    const bulletFireCommnad = new BulletFireCommnad(bullet, attacker, defender, Constants.ShootingDuration, damageNode);
+                    const bulletFireCommnad = new BulletFireCommnad(bullet, attacker, defender, Constants.shootingDuration, damageNode);
                     shootingCommand.nextCommand = bulletFireCommnad;
                     bulletFireCommnad.nextCommand = endCommand;
                     headCommand = shootingCommand;
@@ -293,7 +278,7 @@ export class BattleField extends Component {
     }
 
     checkGameover(): boolean {
-        const leftAliveFishes = this.getAliveActors(this.leftFishes);
+        const leftAliveFishes = Utils.getAliveActors(this.leftFishes);
 
         if (leftAliveFishes && leftAliveFishes.length == 0) {
             return true;
@@ -314,7 +299,7 @@ export class BattleField extends Component {
     gotoNextStage() {
         this.Loading.getComponent(UIOpacity).opacity = 255;
         this.currentStage++;
-        this.leftFishes = this.getAliveActors(this.leftFishes);
+        this.leftFishes = Utils.getAliveActors(this.leftFishes);
 
         this.rightFishes = [];
         this._prefabLoadingCount = 5;
@@ -329,7 +314,7 @@ export class BattleField extends Component {
             this._isBattleBegin = true;
             this.Loading.getComponent(UIOpacity).opacity = 0;
             this.battleLoop(([...this.leftFishes, ...this.rightFishes]));
-            this.fireAreaField.openFire();
+            this.fireAreaField.openFire(this.rightFishes);
         }
     }
 }
