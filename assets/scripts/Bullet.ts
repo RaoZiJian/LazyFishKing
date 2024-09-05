@@ -31,20 +31,25 @@ export class Bullet extends Component {
     }
 
     lookAt() {
-        if (this.target) {
-            let direction = this.bullet.worldPosition.subtract(this.target.node.worldPosition);
+        if (this.target && this.target.isAlive) {
+            let direction = this.bullet.worldPosition.subtract(this.target.model.worldPosition);
             let angle = Math.atan2(direction.y, direction.x);
             this.bullet.angle = angle * (180 / Math.PI);
         }
     }
 
-    fire(target:Mediator, duration:number, isReverse:number, callback:()=>void) {
+    fire(target: Mediator, duration: number, isReverse: number, callback: () => void) {
         this.isReverse = isReverse;
         this.target = target;
-        tween(this.bullet)
-            .to(duration, { worldPosition: this.target.model.worldPosition })
+        tween(this.node)
+            .to(duration, { worldPosition: this.target.model.worldPosition }, {
+                easing: "linear",
+                onUpdate: (target: Vec3, ratio: number) => {
+                    this.lookAt();
+                }
+            })
             .call(() => {
-                if(callback){
+                if (callback) {
                     callback();
                 }
             })
@@ -53,12 +58,6 @@ export class Bullet extends Component {
 
     start() {
 
-    }
-
-    update(deltaTime: number) {
-        if (this.target) {
-            this.lookAt();
-        }
     }
 }
 

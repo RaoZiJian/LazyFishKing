@@ -52,22 +52,6 @@ export class BattleField extends Component {
         this._currentStage = value;
     }
 
-    private _damagePrefab: Prefab;
-    public get damagePrefab(): Prefab {
-        return this._damagePrefab;
-    }
-    public set damagePrefab(value: Prefab) {
-        this._damagePrefab = value;
-    }
-
-    private _buffNode: Prefab;
-    public get buffPrefab(): Prefab {
-        return this._buffNode;
-    }
-    public set buffPrefab(value: Prefab) {
-        this._buffNode = value;
-    }
-
     private _allPrefabCount: number = 1;
     private _prefabLoadingCount: number = 0;
     private _isBattleBegin: boolean = false;
@@ -120,26 +104,11 @@ export class BattleField extends Component {
         }
     }
 
-    initEffectsResource() {
-        resources.load(RES_URL.damageResources, Prefab, (error, prefab) => {
-            if (prefab) {
-                this.damagePrefab = prefab;
-            }
-        })
-
-        resources.load(RES_URL.buffUrl, Prefab, (error, prefab) => {
-            if (prefab) {
-                this.buffPrefab = prefab;
-            }
-        })
-    }
-
     start() {
         profiler.hideStats();
         this.Loading.getComponent(UIOpacity).opacity = 255;
         this.fetchMyFishes();
         this.initEnemyFishes()
-        this.initEffectsResource();
     }
 
     getNextActionActor(targets: Mediator[]) {
@@ -189,7 +158,6 @@ export class BattleField extends Component {
         let defender: Mediator = isAttackerLeft ? Utils.getNextDefender(this.rightFishes) : Utils.getNextDefender(this.leftFishes);
 
         const startPosition = new Vec3(attacker.node.worldPosition.x, attacker.node.worldPosition.y, attacker.node.worldPosition.z);
-        const damageNode = instantiate(this.damagePrefab);
         let headCommand: Command;
         let endCommand = new EndTurnCoomand(() => {
             if (this.checkGameover()) {
@@ -219,21 +187,14 @@ export class BattleField extends Component {
         if (this.isCanSkill(attacker)) {
             const id = attacker.actor.cfg?.MainSkill;
             const skillCfg = GameTsCfg.MainSkill[id];
-            const buff = Utils.parseString(skillCfg.buffs);
-            let buffNode: BuffNode;
-            if (buff && buff.length > 0) {
-                const node = instantiate(this.buffPrefab);
-                buffNode = node.getComponent(BuffNode);
-            }
-
             const targets = isAttackerLeft ? this.rightFishes : this.leftFishes;
 
             if (skillCfg.shouldMove == 1) {
-                const skillCommand = new MainSkillCastCommand(attacker, targets, id, damageNode, buffNode);
+                const skillCommand = new MainSkillCastCommand(attacker, targets, id);
                 skillCommand.nextCommand = endCommand;
                 headCommand = skillCommand;
             } else {
-                const skillCommand = new MainSkillCastCommand(attacker, targets, id, damageNode, buffNode);
+                const skillCommand = new MainSkillCastCommand(attacker, targets, id);
                 const moveTarget = skillCommand.getMoveTarget();
                 const targePostion = new Vec3(moveTarget.node.worldPosition.x + moveTarget.getModelWidth() * moveTarget.isReverse, moveTarget.node.worldPosition.y, moveTarget.node.worldPosition.z);
                 const move = new MoveCommand(attacker, targePostion, Constants.moveDuration);
@@ -253,7 +214,7 @@ export class BattleField extends Component {
 
                 const targePostion = new Vec3(defender.node.worldPosition.x + defender.getModelWidth() * defender.isReverse, defender.node.worldPosition.y, defender.node.worldPosition.z);
                 const move = new MoveCommand(attacker, targePostion, Constants.moveDuration);
-                const attack = new AttackCommand(attacker, defender, damageNode);
+                const attack = new AttackCommand(attacker, defender);
                 const moveBack = new MoveCommand(attacker, startPosition, Constants.moveDuration);
                 move.nextCommand = attack;
                 moveBack.nextCommand = endCommand;
@@ -264,7 +225,7 @@ export class BattleField extends Component {
                 let bullet = shootingMediator.cloneArrow();
                 if (bullet) {
                     const shootingCommand = new ShootingCommand(attacker, defender);
-                    const bulletFireCommnad = new BulletFireCommnad(bullet, attacker, defender, Constants.shootingDuration, damageNode);
+                    const bulletFireCommnad = new BulletFireCommnad(bullet, attacker, defender, Constants.shootingDuration);
                     shootingCommand.nextCommand = bulletFireCommnad;
                     bulletFireCommnad.nextCommand = endCommand;
                     headCommand = shootingCommand;

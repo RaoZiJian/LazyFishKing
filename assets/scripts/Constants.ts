@@ -15,14 +15,14 @@ export const Constants = {
     rageAdd: 50,
     maxRage: 100,
     clickBulletFlyTime: 0.3,
-    clickBulletDamage: 5,
+    clickBulletDamage: 20,
 }
 
 export const RES_URL = {
     audioPrefix: "fishes/Audios/",
-    explosionUrl: "effects/explosion/explosion",
-    damageResources: "effects/Damage",
-    buffUrl: "effects/buff/BuffNode",
+    explosion: "effects/explosion/explosion",
+    damage: "effects/Damage",
+    buff: "effects/buff/BuffNode",
     tauntAudio: "fishes/Audios/taunt",
     clickEffect: "effects/click/clickEffect",
     clickBullet: "effects/clickBullet/clickBullet"

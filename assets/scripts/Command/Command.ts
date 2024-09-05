@@ -7,6 +7,7 @@ import { DamageNode } from "../DamageNode";
 import { MainSkillFactory } from "../Skill/MainSkillFactory";
 import { MainSkill } from "../Skill/MainSkill";
 import { BuffNode } from "../BuffNode";
+import { ResPool } from "../ResPool";
 
 export abstract class Command {
 
@@ -162,23 +163,11 @@ export class AttackCommand extends Command {
         this._damage = value;
     }
 
-    private _damageNode: Node;
-    /**
-     * 伤害文字节点
-     */
-    public get damageNode(): Node {
-        return this._damageNode;
-    }
-    public set damageNode(value: Node) {
-        this._damageNode = value;
-    }
-
-    constructor(attacker: Mediator, denfender: Mediator, damageNode: Node, damage?: number) {
+    constructor(attacker: Mediator, denfender: Mediator, damage?: number) {
         super();
         this.attacker = attacker;
         this.defender = denfender;
         this.damage = damage;
-        this.damageNode = damageNode;
         this.duration = this.attacker.stateMachine.getAnimationDuration(States.ATTACKING) * 0.5;
     }
 
@@ -193,11 +182,11 @@ export class AttackCommand extends Command {
             this.damage = this.damage > 0 ? this.damage : 1;
             const isDead = (this.defender.actor.hp - this.damage) <= 0;
             if (!isDead) {
-                const hurtCommand = new HurtCommand(this.defender, this.damageNode, this.damage);
+                const hurtCommand = new HurtCommand(this.defender, this.damage);
                 hurtCommand.nextCommand = this.nextCommand;
                 this.nextCommand = hurtCommand;
             } else {
-                const deadCommand = new DeadCommand(this.defender, this.damageNode);
+                const deadCommand = new DeadCommand(this.defender);
                 deadCommand.nextCommand = this.nextCommand;
                 this.nextCommand = deadCommand;
             }
@@ -235,19 +224,10 @@ export class HurtCommand extends Command {
         this._damage = value;
     }
 
-    private _damageNode: Node;
-    public get damageNode(): Node {
-        return this._damageNode;
-    }
-    public set damageNode(value: Node) {
-        this._damageNode = value;
-    }
-
-    constructor(target: Mediator, damageNode: Node, damage: number) {
+    constructor(target: Mediator, damage: number) {
         super();
         this.target = target;
         this.damage = damage;
-        this.damageNode = damageNode;
         this.duration = this.target.stateMachine.getAnimationDuration(States.HURT);
     }
 
@@ -256,15 +236,20 @@ export class HurtCommand extends Command {
             this.target.changeState(States.HURT);
             const currentHp = this.target.actor.hp - this.damage;
             this.target.setHp(currentHp > 0 ? currentHp : 0);
-            this.target.node.addChild(this.damageNode);
-            const damageNode = this.damageNode.getComponent(DamageNode);
-            damageNode.label.string = this.damage.toString();
-            damageNode.playZoomIn();
-
-            this.target.scheduleOnce(() => {
-                damageNode.playZoomOut();
+            const resPool = director.getScene().getChildByName("Canvas").getComponent(ResPool);
+            const damageNode = resPool.getDamageNode();
+            if (damageNode) {
+                this.target.node.addChild(damageNode);
+                const damageComponent = damageNode.getComponent(DamageNode);
+                damageComponent.label.string = this.damage.toString();
+                damageComponent.playZoomIn();
+                this.target.scheduleOnce(() => {
+                    damageComponent.playZoomOut();
+                    this.complete();
+                }, this.duration)
+            } else {
                 this.complete();
-            }, this.duration)
+            }
         } else {
             this.complete();
         }
@@ -284,39 +269,36 @@ export class DeadCommand extends Command {
         this._target = value;
     }
 
-    private _damageNode: Node;
-    public get damageNode(): Node {
-        return this._damageNode;
-    }
-    public set damageNode(value: Node) {
-        this._damageNode = value;
-    }
-
-    constructor(target: Mediator, damageNode: Node) {
+    constructor(target: Mediator) {
         super();
         this.target = target;
-        this.damageNode = damageNode;
         this.duration = this.target.stateMachine.getAnimationDuration(States.DYING);
     }
 
     execute(): void {
         if (this.target.isAlive) {
             this.target.changeState(States.DYING);
-            this.target.node.addChild(this.damageNode);
-            const damageNode = this.damageNode.getComponent(DamageNode);
-            damageNode.label.string = this.target.getHp().toString();
-            this.target.setHp(0);
-            damageNode.playZoomIn();
+            const resPool = director.getScene().getChildByName("Canvas").getComponent(ResPool);
+            const damageNode = resPool.getDamageNode();
+            if (damageNode) {
+                this.target.node.addChild(damageNode);
 
-            this.target.scheduleOnce(() => {
+                const damageComponent = damageNode.getComponent(DamageNode);
+                damageComponent.label.string = this.target.getHp().toString();
+                this.target.setHp(0);
+                damageComponent.playZoomIn();
+
+                this.target.scheduleOnce(() => {
+                    this.complete();
+                    this.target.node.removeFromParent();
+                }, this.duration * 0.5);
+
+                this.target.scheduleOnce(() => {
+                    damageComponent.playZoomOut();
+                }, this.duration * 0.5 > 0.2 ? this.duration * 0.5 : 0.3);
+            } else {
                 this.complete();
-                this.target.node.removeFromParent();
-            }, this.duration * 0.5);
-
-            this.target.scheduleOnce(() => {
-                damageNode.playZoomOut();
-            }, this.duration * 0.5 > 0.2 ? this.duration * 0.5 : 0.3);
-
+            }
         } else {
             this.complete();
         }
@@ -393,60 +375,47 @@ export class BulletFireCommnad extends Command {
         this._damage = value;
     }
 
-    private _damageNode: Node;
-    /**
-     * 伤害节点
-     */
-    public get damageNode(): Node {
-        return this._damageNode;
-    }
-    public set damageNode(value: Node) {
-        this._damageNode = value;
-    }
-
-    constructor(bullet: Node, attacker: Mediator, target: Mediator, duration: number, damageNode: Node, damage?: number) {
+    constructor(bullet: Node, attacker: Mediator, target: Mediator, duration: number, damage?: number) {
         super();
         this.bullet = bullet;
         this.attacker = attacker;
         this.target = target;
         this.damage = damage;
-        this.damageNode = damageNode;
         this.duration = duration;
     }
 
     execute(): void {
-        const canvas = director.getScene().getChildByName('Canvas');
-        canvas.addChild(this.bullet);
-        this.bullet.worldPosition = this.attacker.node.worldPosition;
-        const bulletComponent = this.bullet.getComponent(Bullet);
-        bulletComponent.fire(this.target, this.duration - 0.1, this.attacker.isReverse, () => {
-            this.bullet.removeFromParent();
-            this.attacker.changeState(States.IDLE);
-
-            if (this.damage == undefined) {
-                this.damage = this.attacker.actor.attack - this.target.actor.denfence;
-            }
-            this.damage = this.damage > 0 ? this.damage : 1;
-            const currentRage: number = this.attacker.getRage() + Constants.rageAdd;
-            this.attacker.setRage(currentRage >= 100 ? 100 : currentRage);
-            const isDead = (this.target.actor.hp - this.damage) <= 0;
-            if (!isDead) {
-                const hurtCommand = new HurtCommand(this.target, this.damageNode, this.damage);
-                hurtCommand.execute();
-            } else {
-                const deadCommand = new DeadCommand(this.target, this.damageNode);
-                deadCommand.execute();
-            }
-
-            resources.load(RES_URL.explosionUrl, Prefab, (error, prefab) => {
-                if (prefab) {
-                    let explosionNode = instantiate(prefab);
-                    const explosion = new BulletFireExplosion(explosionNode, this.target);
-                    explosion.execute();
+        if(this.target && this.target.isAlive){
+            const canvas = director.getScene().getChildByName('Canvas');
+            canvas.addChild(this.bullet);
+            this.bullet.worldPosition = this.attacker.node.worldPosition;
+            const bulletComponent = this.bullet.getComponent(Bullet);
+            bulletComponent.fire(this.target, this.duration - 0.1, this.attacker.isReverse, () => {
+                this.bullet.removeFromParent();
+                this.attacker.changeState(States.IDLE);
+    
+                if (this.damage == undefined) {
+                    this.damage = this.attacker.actor.attack - this.target.actor.denfence;
                 }
+                this.damage = this.damage > 0 ? this.damage : 1;
+                const currentRage: number = this.attacker.getRage() + Constants.rageAdd;
+                this.attacker.setRage(currentRage >= 100 ? 100 : currentRage);
+                const isDead = (this.target.actor.hp - this.damage) <= 0;
+                if (!isDead) {
+                    const hurtCommand = new HurtCommand(this.target, this.damage);
+                    hurtCommand.execute();
+                } else {
+                    const deadCommand = new DeadCommand(this.target);
+                    deadCommand.execute();
+                }
+                const explosion = new BulletFireExplosion(this.target);
+                explosion.execute();
+                this.complete();
             })
+        }else{
+            this.attacker.changeState(States.IDLE);
             this.complete();
-        })
+        }
     }
 }
 
@@ -468,8 +437,10 @@ export class BulletFireExplosion extends Command {
         this._explosionNode = value;
     }
 
-    constructor(explosionNode: Node, target: Mediator) {
+    constructor(target: Mediator) {
         super();
+        const resPool = director.getScene().getChildByName("Canvas").getComponent(ResPool);
+        const explosionNode = resPool.getExplosionNode();
         this.explosionNode = explosionNode;
         this.target = target;
         this.duration = this.explosionNode.getComponent(Animation).defaultClip.duration;
@@ -479,8 +450,10 @@ export class BulletFireExplosion extends Command {
         const animation = this.explosionNode.getComponent(Animation);
         this.target.model.addChild(this.explosionNode);
         if (animation) {
-            animation.play;
+            animation.play();
             this.target.scheduleOnce(() => {
+                const resPool = director.getScene().getChildByName("Canvas").getComponent(ResPool);
+                resPool.putNode(this.explosionNode);
                 this.explosionNode.removeFromParent();
                 this.complete();
             }, this.duration)
@@ -514,20 +487,11 @@ export class MainSkillCastCommand extends Command {
         this._mainSkill = value;
     }
 
-    private _buffNode: BuffNode;
-    public get buffNode(): BuffNode {
-        return this._buffNode;
-    }
-    public set buffNode(value: BuffNode) {
-        this._buffNode = value;
-    }
-
-    constructor(caster: Mediator, denfenders: Mediator[], skillId: number, damageNode: Node, buffNode?: BuffNode) {
+    constructor(caster: Mediator, denfenders: Mediator[], skillId: number) {
         super();
         this.caster = caster;
         this.defenders = denfenders;
-        this.buffNode = buffNode;
-        this.mainSkill = MainSkillFactory.createMainSkill(skillId, caster, denfenders, damageNode, buffNode);
+        this.mainSkill = MainSkillFactory.createMainSkill(skillId, caster, denfenders);
         if (this.mainSkill) {
             this.duration = this.mainSkill.duration;
         }

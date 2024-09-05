@@ -2,10 +2,11 @@ import { BuffNode } from "../BuffNode";
 import { DeadCommand, HurtCommand } from "../Command/Command";
 import GameTsCfg from "../data/client/GameTsCfg";
 import { Mediator } from "../mediator/Mediator";
+import { ResPool } from "../ResPool";
 import { States } from "../stateMachine/StateMachine";
 import { Utils } from "../Utils";
 import { Buff } from "./Buff";
-import { Animation, tween, Vec3, Node } from 'cc';
+import { Animation, tween, Vec3, Node, director } from 'cc';
 
 export abstract class MainSkill {
 
@@ -48,27 +49,9 @@ export abstract class MainSkill {
         this._targets = value;
     }
 
-    private _buffNode: BuffNode;
-    public get buffNode(): BuffNode {
-        return this._buffNode;
-    }
-    public set buffNode(value: BuffNode) {
-        this._buffNode = value;
-    }
-
-    private _damageNode: Node;
-    public get damageNode(): Node {
-        return this._damageNode;
-    }
-    public set damageNode(value: Node) {
-        this._damageNode = value;
-    }
-
-    constructor(id: number, caster: Mediator, targets: Mediator[], damageNode: Node, buffNode?: BuffNode) {
+    constructor(id: number, caster: Mediator, targets: Mediator[]) {
         this.skillId = id;
         this.caster = caster;
-        this.buffNode = buffNode;
-        this.damageNode = damageNode;
         this.targets = targets;
 
         if (GameTsCfg.MainSkill[this.skillId]) {
@@ -93,8 +76,8 @@ export class SingleTauntSkill extends MainSkill {
         this._animation = value;
     }
 
-    constructor(id: number, caster: Mediator, targets: Mediator[], damageNode: Node, buffNode?: BuffNode) {
-        super(id, caster, targets, damageNode, buffNode);
+    constructor(id: number, caster: Mediator, targets: Mediator[]) {
+        super(id, caster, targets);
         this.animation = this.caster.model.getComponent(Animation);
         const tauntAnimation = this.animation.clips.filter(clip => clip.name == this.TAUNT_ANIMATION_NAME);
         this.duration = tauntAnimation[0].duration;
@@ -112,16 +95,19 @@ export class SingleTauntSkill extends MainSkill {
         this.animation.play(this.TAUNT_ANIMATION_NAME);
         this.caster.audio.playOneShot(this.caster.buffAudioClip);
 
-        if (this.buffNode) {
-            this.buffNode.label.string = "嘲讽 + " + tauntValue;
-            this.caster.node.addChild(this.buffNode.node);
-        }
+        const resPool = director.getScene().getChildByName("Canvas").getComponent(ResPool);
+        const buffNode = resPool.getBuffNode();
 
-        if (this.buffNode) {
+        if (buffNode) {
+            const buffComponent = buffNode.getComponent(BuffNode);
+            buffComponent.label.string = "嘲讽 + " + tauntValue;
+            this.caster.node.addChild(buffNode);
             this.caster.scheduleOnce(() => {
-                this.buffNode.node.removeFromParent();
+                resPool.putNode(buffNode);
+                buffNode.removeFromParent();
             }, this.duration + 0.5)
         }
+
     }
 
     getMoveTarget(): Mediator {
@@ -156,8 +142,8 @@ export class JumpAttackSkill extends MainSkill {
     private _jumpLoopDuration: number = 0;
     private _attackingDuration: number = 0;
 
-    constructor(id: number, caster: Mediator, targets: Mediator[], damageNode: Node, buffNode?: BuffNode) {
-        super(id, caster, targets, damageNode, buffNode);
+    constructor(id: number, caster: Mediator, targets: Mediator[]) {
+        super(id, caster, targets);
         this.animation = this.caster.model.getComponent(Animation);
         this._jumpStartDuration = this.animation.clips.filter(clip => clip.name == this.JUMP_START)[0].duration;
         this._jumpLoopDuration = this.animation.clips.filter(clip => clip.name == this.JUMP_LOOP)[0].duration;
@@ -203,12 +189,12 @@ export class JumpAttackSkill extends MainSkill {
                         damage = damage > 0 ? damage : 1;
                         const isDead = (this.defender.actor.hp - damage) <= 0;
                         if (!isDead) {
-                            const hurtCommand = new HurtCommand(this.defender, this.damageNode, damage);
+                            const hurtCommand = new HurtCommand(this.defender, damage);
                             this.defender.scheduleOnce(() => {
                                 hurtCommand.execute();
                             }, this._jumpLoopDuration * 0.5)
                         } else {
-                            const deadCommand = new DeadCommand(this.defender, this.damageNode);
+                            const deadCommand = new DeadCommand(this.defender);
                             this.defender.scheduleOnce(() => {
                                 deadCommand.execute();
                             }, this._jumpLoopDuration * 0.5)

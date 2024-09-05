@@ -1,4 +1,5 @@
-import { _decorator, Component, Label, Node, tween, Vec3 } from 'cc';
+import { _decorator, Component, director, Label, Node, tween, Vec3 } from 'cc';
+import { ResPool } from './ResPool';
 const { ccclass, property } = _decorator;
 
 @ccclass('DamageNode')
@@ -29,6 +30,8 @@ export class DamageNode extends Component {
         tween(this.node)
             .to(0.2, { scale: new Vec3(0, 0, 0) })
             .call(() => {
+                const resPool = director.getScene().getChildByName("Canvas").getComponent(ResPool);
+                resPool.putNode(this.node);
                 this.node.removeFromParent();
             })
             .start();

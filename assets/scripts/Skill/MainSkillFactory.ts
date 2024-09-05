@@ -10,12 +10,12 @@ export const skillIdEnum = {
 
 export class MainSkillFactory {
 
-    static createMainSkill(id: number, caster: Mediator, targets: Mediator[], damageNode: Node, buffNode?: BuffNode) {
+    static createMainSkill(id: number, caster: Mediator, targets: Mediator[]) {
         switch (id) {
             case skillIdEnum.taunt:
-                return  new SingleTauntSkill(id, caster, targets, damageNode, buffNode);
+                return new SingleTauntSkill(id, caster, targets);
             case skillIdEnum.jumpAttack:
-                return  new JumpAttackSkill(id, caster, targets, damageNode, buffNode);
+                return new JumpAttackSkill(id, caster, targets);
             default:
                 break;
         }

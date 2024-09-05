@@ -4,6 +4,7 @@ import { Mediator } from './mediator/Mediator';
 import { Utils } from './Utils';
 import { Bullet } from './Bullet';
 import { BulletFireExplosion, DeadCommand, HurtCommand } from './Command/Command';
+import { ResPool } from './ResPool';
 const { ccclass, property } = _decorator;
 
 @ccclass('FireAreaFiled')
@@ -15,14 +16,6 @@ export class FireAreaFiled extends Component {
     }
     public set clickNode(value: Node) {
         this._clickNode = value;
-    }
-
-    private _clickBulletPrefab: Prefab;
-    public get clickBulletPrefab(): Prefab {
-        return this._clickBulletPrefab;
-    }
-    public set clickBulletPrefab(value: Prefab) {
-        this._clickBulletPrefab = value;
     }
 
     private _canvas: Node;
@@ -49,12 +42,6 @@ export class FireAreaFiled extends Component {
                 })
             }
         })
-
-        resources.load(RES_URL.clickBullet, Prefab, (error, prefab) => {
-            if (prefab) {
-                this.clickBulletPrefab = prefab;
-            }
-        })
     }
 
     openFire(targets: Mediator[]) {
@@ -62,29 +49,26 @@ export class FireAreaFiled extends Component {
 
             const clickPosition = new Vec3(event.getUILocation().x, event.getUILocation().y, this.clickNode.worldPosition.z);
             const defender = Utils.getNextDefender(targets);
-            if(defender){
-                const bullet = instantiate(this.clickBulletPrefab);
+            if (defender && defender.isAlive) {
+                const resPool = this.canvas.getComponent(ResPool);
+                const bullet = resPool.getClickBulletNode();
                 this.canvas.addChild(bullet);
                 bullet.worldPosition = clickPosition;
-                bullet.getComponent(Bullet).fire(defender, Constants.clickBulletFlyTime, 1, ()=>{
-                    
+
+                bullet.getComponent(Bullet).fire(defender, Constants.clickBulletFlyTime, 1, () => {
+                    resPool.putNode(bullet);
+                    bullet.removeFromParent();
                     const isDead = (defender.actor.hp - Constants.clickBulletDamage) <= 0;
                     if (!isDead) {
-                        const hurtCommand = new HurtCommand(defender, this.damageNode, Constants.clickBulletDamage);
+                        const hurtCommand = new HurtCommand(defender, Constants.clickBulletDamage);
                         hurtCommand.execute();
                     } else {
-                        const deadCommand = new DeadCommand(defender, this.damageNode);
+                        const deadCommand = new DeadCommand(defender);
                         deadCommand.execute();
                     }
-        
-                    resources.load(RES_URL.explosionUrl, Prefab, (error, prefab) => {
-                        if (prefab) {
-                            let explosionNode = instantiate(prefab);
-                            const explosion = new BulletFireExplosion(explosionNode, this.target);
-                            explosion.execute();
-                        }
-                    })
 
+                    const explosion = new BulletFireExplosion(defender);
+                    explosion.execute();
                 });
             }
 
