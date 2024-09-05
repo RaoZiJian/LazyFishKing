@@ -245,14 +245,11 @@ export class HurtCommand extends Command {
                 damageComponent.playZoomIn();
                 this.target.scheduleOnce(() => {
                     damageComponent.playZoomOut();
-                    this.complete();
                 }, this.duration)
-            } else {
-                this.complete();
-            }
-        } else {
-            this.complete();
-        }
+            } 
+        } 
+
+        this.complete();
     }
 }
 
@@ -289,19 +286,16 @@ export class DeadCommand extends Command {
                 damageComponent.playZoomIn();
 
                 this.target.scheduleOnce(() => {
-                    this.complete();
                     this.target.node.removeFromParent();
                 }, this.duration * 0.5);
 
                 this.target.scheduleOnce(() => {
                     damageComponent.playZoomOut();
                 }, this.duration * 0.5 > 0.2 ? this.duration * 0.5 : 0.3);
-            } else {
-                this.complete();
-            }
-        } else {
-            this.complete();
-        }
+            } 
+        } 
+
+        this.complete();
     }
 }
 

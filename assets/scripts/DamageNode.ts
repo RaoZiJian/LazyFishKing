@@ -31,6 +31,7 @@ export class DamageNode extends Component {
             .to(0.2, { scale: new Vec3(0, 0, 0) })
             .call(() => {
                 const resPool = director.getScene().getChildByName("Canvas").getComponent(ResPool);
+                this.node.position = new Vec3(0, this.node.position.y - 15, 0);
                 resPool.putNode(this.node);
                 this.node.removeFromParent();
             })
