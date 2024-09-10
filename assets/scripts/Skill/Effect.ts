@@ -60,7 +60,7 @@ export class Effect {
 
     private _duration: number;
     /**
-     * 持续时间，单位秒
+     * 持续时间，单位秒。如果持续时间设置为-1，代表永久effect
      */
     public get duration(): number {
         return this._duration;
@@ -93,15 +93,16 @@ export class Effect {
     cast(target: Mediator) {
         this.target = target;
         if (this.target && this.target.isAlive) {
-
-            if (this.target.actor[this.property]) {
-                this.target.actor[this.property] += this.propertyValue;
-                this.target.scheduleOnce(() => {
-                    if (!this.isExpired) {
-                        this.target.actor[this.property] -= this.propertyValue;
-                        this.isExpired = true;
-                    }
-                }, this.duration);
+            if(this.duration >0){
+                if (this.target.actor[this.property]) {
+                    this.target.actor[this.property] += this.propertyValue;
+                    this.target.scheduleOnce(() => {
+                        if (!this.isExpired) {
+                            this.target.actor[this.property] -= this.propertyValue;
+                            this.isExpired = true;
+                        }
+                    }, this.duration);
+                }
             }
         }
     }

@@ -1,6 +1,5 @@
 import { _decorator, Component, instantiate, Node, UIOpacity } from 'cc';
 import { Mediator } from './Mediator';
-import { Bullet } from '../Bullet';
 const { ccclass, property } = _decorator;
 
 @ccclass('ShootingMediator')

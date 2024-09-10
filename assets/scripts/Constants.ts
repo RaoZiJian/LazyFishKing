@@ -6,6 +6,7 @@ export const LazyFishId = {
     Octopus: 5,
     ZhangLiao: 6,
     ZhaoYun: 7,
+    XiaoQiao: 8,
 }
 
 export const Constants = {

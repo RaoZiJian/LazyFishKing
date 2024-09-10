@@ -13,7 +13,6 @@ export default {
       "rage": 10,
       "speed": 2,
       "taunt": 20,
-      "bullet": "",
       "MainSkill": 1,
       "buff1": 1
     },
@@ -30,7 +29,6 @@ export default {
       "rage": 10,
       "speed": 3,
       "taunt": 30,
-      "bullet": "",
       "MainSkill": 1,
       "buff1": 2
     },
@@ -47,7 +45,6 @@ export default {
       "rage": 10,
       "speed": 5,
       "taunt": 10,
-      "bullet": "fishes/HuangZhong/Shooting/HuangZhongArrow",
       "MainSkill": 1,
       "buff1": 1
     },
@@ -64,7 +61,6 @@ export default {
       "rage": 30,
       "speed": 4,
       "taunt": 20,
-      "bullet": "",
       "MainSkill": 2,
       "buff1": 2
     },
@@ -81,7 +77,6 @@ export default {
       "rage": 30,
       "speed": 4,
       "taunt": 20,
-      "bullet": "",
       "MainSkill": 2,
       "buff1": 1
     },
@@ -98,7 +93,6 @@ export default {
       "rage": 20,
       "speed": 2,
       "taunt": 20,
-      "bullet": "",
       "MainSkill": 1,
       "buff1": 1
     },
@@ -115,9 +109,24 @@ export default {
       "rage": "",
       "speed": 6,
       "taunt": "",
-      "bullet": "",
       "MainSkill": 1,
       "buff1": 2
+    },
+    "8": {
+      "id": 8,
+      "name": "XiaoQiao",
+      "prefab": "fishes/XiaoQiao/XiaoQiaoActor",
+      "attackType": 2,
+      "attack": 20,
+      "attackAudio": "attacking1",
+      "deadAudio": "dying1",
+      "defence": 10,
+      "hp": 120,
+      "rage": 10,
+      "speed": 5,
+      "taunt": 10,
+      "MainSkill": 3,
+      "buff1": ""
     }
   },
   "Buff": {
@@ -128,6 +137,10 @@ export default {
     "2": {
       "id": 2,
       "effects": 2
+    },
+    "3": {
+      "id": 3,
+      "effects": 3
     }
   },
   "Effect": {
@@ -144,6 +157,13 @@ export default {
       "duration": 30,
       "property": "taunt",
       "propertyValue": 10
+    },
+    "3": {
+      "id": 3,
+      "name": "治疗",
+      "duration": -1,
+      "property": "hp",
+      "propertyValue": 30
     }
   },
   "MainSkill": {
@@ -159,6 +179,13 @@ export default {
       "name": "跳劈",
       "buffs": "",
       "shouldMove": 2,
+      "rageCost": 50
+    },
+    "3": {
+      "id": 3,
+      "name": "群体治疗",
+      "buffs": "",
+      "shouldMove": 1,
       "rageCost": 50
     }
   },
