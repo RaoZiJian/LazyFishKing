@@ -93,9 +93,25 @@ export class Effect {
     cast(target: Mediator) {
         this.target = target;
         if (this.target && this.target.isAlive) {
-            if(this.duration >0){
-                if (this.target.actor[this.property]) {
-                    this.target.actor[this.property] += this.propertyValue;
+            if (this.target.actor[this.property]) {
+                this.target.actor[this.property] += this.propertyValue;
+                //更新HP bar, hp不能超过血量上限。
+                if(this.property=='hp'){
+                    if(this.target.actor.hp > this.target.actor.cfg.hp){
+                        this.target.actor.hp = this.target.actor.cfg.hp
+                    }
+                    target.setHp(this.target.actor.hp);
+                }
+
+                //更新 rage bar, rage不能超过血量上限。
+                if(this.property=='rage'){
+                    if(this.target.actor.rage > this.target.actor.cfg.rage){
+                        this.target.actor.rage = this.target.actor.cfg.rage
+                    }
+                    target.setRage(this.target.actor.rage);
+                }                
+
+                if(this.duration>0){
                     this.target.scheduleOnce(() => {
                         if (!this.isExpired) {
                             this.target.actor[this.property] -= this.propertyValue;

@@ -132,15 +132,18 @@ export default {
   "Buff": {
     "1": {
       "id": 1,
-      "effects": 1
+      "effects": 1,
+      "audio": "fishes/Audios/taunt"
     },
     "2": {
       "id": 2,
-      "effects": 2
+      "effects": 2,
+      "audio": "fishes/Audios/taunt"
     },
     "3": {
       "id": 3,
-      "effects": 3
+      "effects": 3,
+      "audio": "fishes/Audios/healing1"
     }
   },
   "Effect": {
@@ -184,7 +187,7 @@ export default {
     "3": {
       "id": 3,
       "name": "群体治疗",
-      "buffs": "",
+      "buffs": 3,
       "shouldMove": 1,
       "rageCost": 50
     }

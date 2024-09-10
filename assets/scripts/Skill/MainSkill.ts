@@ -67,6 +67,7 @@ export abstract class MainSkill {
 
 export class SingleTauntSkill extends MainSkill {
     private TAUNT_ANIMATION_NAME = "taunt";
+    private TAUNT_DISPLAY_TIME = 1;
 
     private _animation: Animation;
     public get animation(): Animation {
@@ -80,7 +81,7 @@ export class SingleTauntSkill extends MainSkill {
         super(id, caster, targets);
         this.animation = this.caster.model.getComponent(Animation);
         const tauntAnimation = this.animation.clips.filter(clip => clip.name == this.TAUNT_ANIMATION_NAME);
-        this.duration = tauntAnimation[0].duration;
+        this.duration = tauntAnimation[0].duration + this.TAUNT_DISPLAY_TIME;
     }
 
     cast() {
@@ -91,9 +92,10 @@ export class SingleTauntSkill extends MainSkill {
             const buff = new Buff(buffs[0]);
             buff.work(this.targets);
             tauntValue = GameTsCfg.Effect[buff.effects[0].id].propertyValue
+            this.animation.play(this.TAUNT_ANIMATION_NAME);
+            this.caster.audio.playOneShot(this.caster.buffAudios.get(buff.id));
         }
-        this.animation.play(this.TAUNT_ANIMATION_NAME);
-        this.caster.audio.playOneShot(this.caster.buffAudioClip);
+
 
         const resPool = director.getScene().getChildByName("Canvas").getComponent(ResPool);
         const buffNode = resPool.getBuffNode();
@@ -105,7 +107,7 @@ export class SingleTauntSkill extends MainSkill {
             this.caster.scheduleOnce(() => {
                 resPool.putNode(buffNode);
                 buffNode.removeFromParent();
-            }, this.duration + 0.5)
+            }, this.duration)
         }
 
     }
@@ -207,5 +209,54 @@ export class JumpAttackSkill extends MainSkill {
             }
         }
     }
+}
 
+export class HealingGroupSkill extends MainSkill {
+    private HEALING_ANIMATION_NAME = "healing";
+    private HEALING_BUFF_DISPLAY_TIME = 0.5;
+
+    private _animation: Animation;
+    public get animation(): Animation {
+        return this._animation;
+    }
+    public set animation(value: Animation) {
+        this._animation = value;
+    }
+
+    constructor(id: number, caster: Mediator, targets: Mediator[]) {
+        super(id, caster, targets);
+        this.animation = this.caster.model.getComponent(Animation);
+        const animation = this.animation.clips.filter(clip => clip.name == this.HEALING_ANIMATION_NAME);
+        this.duration = animation[0].duration + this.HEALING_BUFF_DISPLAY_TIME;
+    }
+
+    cast() {
+        const buffs = Utils.parseString(this.cfg?.buffs) as number[];
+        let healingValue = 0
+        if (buffs && buffs[0]) {
+            const buff = new Buff(buffs[0]);
+            buff.work(this.targets);
+            healingValue = GameTsCfg.Effect[buff.effects[0].id].propertyValue
+            this.animation.play(this.HEALING_ANIMATION_NAME);
+            this.caster.audio.playOneShot(this.caster.buffAudios.get(buff.id));
+        }
+
+        const resPool = director.getScene().getChildByName("Canvas").getComponent(ResPool);
+        this.targets.forEach(target => {
+            const buffNode = resPool.getBuffNode();
+            if (buffNode) {
+                const buffComponent = buffNode.getComponent(BuffNode);
+                buffComponent.label.string = "HP + " + healingValue;
+                target.node.addChild(buffNode);
+                target.scheduleOnce(() => {
+                    resPool.putNode(buffNode);
+                    buffNode.removeFromParent();
+                }, this.duration)
+            }
+        });
+    }
+
+    getMoveTarget(): Mediator {
+        return this.targets[0];
+    }
 }

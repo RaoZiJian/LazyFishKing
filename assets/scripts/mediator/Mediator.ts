@@ -3,6 +3,9 @@ import { StateMachine, States } from '../stateMachine/StateMachine';
 import { Actor } from '../Actor/Actor';
 import { Constants, RES_URL } from '../Constants';
 import { Buff } from '../Skill/Buff';
+import GameTsCfg from '../data/client/GameTsCfg';
+import { Effect } from '../Skill/Effect';
+import { Utils } from '../Utils';
 const { ccclass, property } = _decorator;
 
 @ccclass('Mediator')
@@ -98,14 +101,14 @@ export class Mediator extends Component {
         this._deadAudioClip = value;
     }
 
-    private _buffAudioClip: AudioClip;
-    public get buffAudioClip(): AudioClip {
-        return this._buffAudioClip;
+    private _buffAudios: Map<number, AudioClip>;
+    public get buffAudios(): Map<number, AudioClip> {
+        return this._buffAudios;
     }
-    public set buffAudioClip(value: AudioClip) {
-        this._buffAudioClip = value;
+    public set buffAudios(value: Map<number, AudioClip>) {
+        this._buffAudios = value;
     }
-    
+
 
     getModelWidth(): number {
         const scaleX = Math.abs(this.model.scale.x);
@@ -199,10 +202,34 @@ export class Mediator extends Component {
         });
 
         //读取buff音效
-        const buffAudio = RES_URL.tauntAudio;
-        resources.load(buffAudio, AudioClip, (error, audioClip) => {
-            this.buffAudioClip = audioClip;
+        this.buffAudios = new Map();
+        let buffIds: number[] = [];
+
+        const initialBuffId = this.actor.cfg?.buff1;
+        if (initialBuffId != "") {
+            buffIds.push(initialBuffId);
+        }
+
+        let mainSkillId = this.actor.cfg.MainSkill;
+        if(GameTsCfg.MainSkill[mainSkillId].buffs!=""){
+            let skillBuffs = Utils.parseString(GameTsCfg.MainSkill[mainSkillId].buffs) as number[];
+            skillBuffs.forEach(mainSkillBuffId => {
+                buffIds.push(mainSkillBuffId)
+            });
+        }
+
+        buffIds.forEach(buffId => {
+            const buffCfg = GameTsCfg.Buff[buffId];
+            if (buffCfg.audio) {
+                resources.load(buffCfg.audio, AudioClip, (error, audioClip) => {
+                    if (audioClip) {
+                        this.buffAudios.set(buffId, audioClip);
+                    }
+                });
+            }
         });
+
+
     }
 
 }

@@ -30,6 +30,7 @@ export class Buff {
     }
 
     constructor(id: number) {
+        this.id = id;
         const cfg = GameTsCfg.Buff[id];
         if (cfg) {
             const effectIds = Utils.parseString(cfg?.effects);

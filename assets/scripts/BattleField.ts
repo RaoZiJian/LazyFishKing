@@ -58,7 +58,7 @@ export class BattleField extends Component {
 
     fetchMyFishes() {
         //htttp request get my fishes
-        const myFishes = [3, 3, 4, 4, 4]
+        const myFishes = [3, 3, 4, 4, 8]
         for (let i = 0; i < myFishes.length; i++) {
             const id = myFishes[i];
             const fishURL = GameTsCfg.Actor[id].prefab;
@@ -190,11 +190,11 @@ export class BattleField extends Component {
             const targets = isAttackerLeft ? this.rightFishes : this.leftFishes;
 
             if (skillCfg.shouldMove == 1) {
-                const skillCommand = new MainSkillCastCommand(attacker, targets, id);
+                const skillCommand = new MainSkillCastCommand(attacker, targets, id, this);
                 skillCommand.nextCommand = endCommand;
                 headCommand = skillCommand;
             } else {
-                const skillCommand = new MainSkillCastCommand(attacker, targets, id);
+                const skillCommand = new MainSkillCastCommand(attacker, targets, id, this);
                 const moveTarget = skillCommand.getMoveTarget();
                 const targePostion = new Vec3(moveTarget.node.worldPosition.x + moveTarget.getModelWidth() * moveTarget.isReverse, moveTarget.node.worldPosition.y, moveTarget.node.worldPosition.z);
                 const move = new MoveCommand(attacker, targePostion, Constants.moveDuration);

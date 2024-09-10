@@ -8,6 +8,7 @@ import { MainSkillFactory } from "../Skill/MainSkillFactory";
 import { MainSkill } from "../Skill/MainSkill";
 import { BuffNode } from "../BuffNode";
 import { ResPool } from "../ResPool";
+import { BattleField } from "../BattleField";
 
 export abstract class Command {
 
@@ -246,8 +247,8 @@ export class HurtCommand extends Command {
                 this.target.scheduleOnce(() => {
                     damageComponent.playZoomOut();
                 }, this.duration)
-            } 
-        } 
+            }
+        }
 
         this.complete();
     }
@@ -292,8 +293,8 @@ export class DeadCommand extends Command {
                 this.target.scheduleOnce(() => {
                     damageComponent.playZoomOut();
                 }, this.duration * 0.5 > 0.2 ? this.duration * 0.5 : 0.3);
-            } 
-        } 
+            }
+        }
 
         this.complete();
     }
@@ -379,7 +380,7 @@ export class BulletFireCommnad extends Command {
     }
 
     execute(): void {
-        if(this.target && this.target.isAlive){
+        if (this.target && this.target.isAlive) {
             const canvas = director.getScene().getChildByName('Canvas');
             canvas.addChild(this.bullet);
             this.bullet.worldPosition = this.attacker.node.worldPosition;
@@ -387,7 +388,7 @@ export class BulletFireCommnad extends Command {
             bulletComponent.fire(this.target, this.duration - 0.1, this.attacker.isReverse, () => {
                 this.bullet.removeFromParent();
                 this.attacker.changeState(States.IDLE);
-    
+
                 if (this.damage == undefined) {
                     this.damage = this.attacker.actor.attack - this.target.actor.denfence;
                 }
@@ -406,7 +407,7 @@ export class BulletFireCommnad extends Command {
                 explosion.execute();
                 this.complete();
             })
-        }else{
+        } else {
             this.attacker.changeState(States.IDLE);
             this.complete();
         }
@@ -481,11 +482,11 @@ export class MainSkillCastCommand extends Command {
         this._mainSkill = value;
     }
 
-    constructor(caster: Mediator, denfenders: Mediator[], skillId: number) {
+    constructor(caster: Mediator, denfenders: Mediator[], skillId: number, battleField: BattleField) {
         super();
         this.caster = caster;
         this.defenders = denfenders;
-        this.mainSkill = MainSkillFactory.createMainSkill(skillId, caster, denfenders);
+        this.mainSkill = MainSkillFactory.createMainSkill(skillId, caster, denfenders, battleField);
         if (this.mainSkill) {
             this.duration = this.mainSkill.duration;
         }
