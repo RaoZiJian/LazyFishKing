@@ -260,3 +260,26 @@ export class HealingGroupSkill extends MainSkill {
         return this.targets[0];
     }
 }
+
+/**
+ * 审时度势，对随机3名敌人造成200%攻击伤害，并且恢复自身造成伤害的40%的等量生命
+ */
+export class WindMagicSkill extends MainSkill{
+
+
+    constructor(id: number, caster: Mediator, targets: Mediator[]){
+
+        let realTargets[]
+
+        super(id, caster, targets);
+    }
+
+
+    getMoveTarget(): Mediator {
+
+    }
+    cast() {
+
+    }
+    
+}

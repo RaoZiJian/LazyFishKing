@@ -228,10 +228,7 @@ export class Mediator extends Component {
                 });
             }
         });
-
-
     }
-
 }
 
 

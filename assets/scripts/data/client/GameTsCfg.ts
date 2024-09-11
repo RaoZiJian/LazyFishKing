@@ -118,7 +118,7 @@ export default {
       "prefab": "fishes/XiaoQiao/XiaoQiaoActor",
       "attackType": 2,
       "attack": 20,
-      "attackAudio": "attacking1",
+      "attackAudio": "magicHit2",
       "deadAudio": "dying1",
       "defence": 10,
       "hp": 120,
@@ -126,6 +126,22 @@ export default {
       "speed": 5,
       "taunt": 10,
       "MainSkill": 3,
+      "buff1": ""
+    },
+    "9": {
+      "id": 9,
+      "name": "XuYou",
+      "prefab": "fishes/XuYou/XuYouActor",
+      "attackType": 2,
+      "attack": 40,
+      "attackAudio": "magicHit1",
+      "deadAudio": "dying2",
+      "defence": 1,
+      "hp": 100,
+      "rage": 30,
+      "speed": 5,
+      "taunt": 1,
+      "MainSkill": 4,
       "buff1": ""
     }
   },
@@ -189,6 +205,13 @@ export default {
       "name": "群体治疗",
       "buffs": 3,
       "shouldMove": 1,
+      "rageCost": 50
+    },
+    "4": {
+      "id": 4,
+      "name": "风系魔法",
+      "buffs": "",
+      "shouldMove": 2,
       "rageCost": 50
     }
   },

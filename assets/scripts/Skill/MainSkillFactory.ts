@@ -1,14 +1,14 @@
 import { BattleField } from "../BattleField";
-import { BuffNode } from "../BuffNode";
 import { Mediator } from "../mediator/Mediator";
 import { Utils } from "../Utils";
-import { HealingGroupSkill, JumpAttackSkill, SingleTauntSkill } from "./MainSkill";
+import { HealingGroupSkill, JumpAttackSkill, SingleTauntSkill, WindMagicSkill } from "./MainSkill";
 import { Node } from "cc";
 
 export const skillIdEnum = {
     taunt: 1,
     jumpAttack: 2,
-    healingGroup: 3
+    healingGroup: 3,
+    windMagic: 4,
 }
 
 export class MainSkillFactory {
@@ -21,6 +21,8 @@ export class MainSkillFactory {
             case skillIdEnum.healingGroup:
                 const myAlivefishes = Utils.getAliveActors(battleFiled.leftFishes);
                 return new HealingGroupSkill(id, caster, myAlivefishes);
+            case skillIdEnum.windMagic:
+                return new WindMagicSkill(id, caster, targets);
             default:
                 break;
         }
