@@ -147,7 +147,7 @@
     "__prefab": {
       "__id__": 7
     },
-    "playOnLoad": false,
+    "playOnLoad": true,
     "_clips": [
       {
         "__uuid__": "3378dc50-b878-41c3-8eb1-753092bb7c86",
@@ -172,6 +172,8 @@
     "asset": {
       "__id__": 0
     },
-    "fileId": "43WINQnZVC3pghwBr2Jp3m"
+    "fileId": "43WINQnZVC3pghwBr2Jp3m",
+    "instance": null,
+    "targetOverrides": null
   }
 ]

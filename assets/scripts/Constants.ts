@@ -27,5 +27,6 @@ export const RES_URL = {
     buff: "effects/buff/BuffNode",
     tauntAudio: "fishes/Audios/taunt",
     clickEffect: "effects/click/clickEffect",
-    clickBullet: "effects/clickBullet/clickBullet"
+    clickBullet: "effects/clickBullet/clickBullet",
+    windMagic:"fishes/XuYou/XuYouSkillEffect"
 }

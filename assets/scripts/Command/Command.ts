@@ -1,6 +1,6 @@
 import { instantiate, Prefab, resources, Node, tween, Vec3, director, Animation, Label } from "cc";
 import { Mediator } from "../mediator/Mediator";
-import { States } from "../stateMachine/StateMachine";
+import { StateMachine, States } from "../stateMachine/StateMachine";
 import { Constants, RES_URL } from "../Constants";
 import { DamageNode } from "../DamageNode";
 import { MainSkillFactory } from "../Skill/MainSkillFactory";
@@ -387,6 +387,7 @@ export class BulletFireCommnad extends Command {
             const shootingMediator = this.attacker.getComponent(ShootingMediator);
             this.bullet.worldPosition = shootingMediator.arrow.worldPosition;
             const bulletComponent = this.bullet.getComponent(Bullet);
+            shootingMediator.changeState(States.IDLE);
             bulletComponent.fire(this.target, this.duration - 0.1, this.attacker.isReverse, () => {
                 this.bullet.removeFromParent();
                 this.attacker.changeState(States.IDLE);
@@ -505,8 +506,8 @@ export class MainSkillCastCommand extends Command {
             this.caster.setRage(currentRage <= 0 ? 0 : currentRage);
             this.mainSkill.cast();
             this.caster.scheduleOnce(() => {
-                this.complete();
                 this.caster.changeState(States.IDLE);
+                this.complete();
             }, this.duration)
         } else {
             this.complete();

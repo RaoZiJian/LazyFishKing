@@ -140,7 +140,7 @@ export default {
       "hp": 100,
       "rage": 30,
       "speed": 5,
-      "taunt": 1,
+      "taunt": 200,
       "MainSkill": 4,
       "buff1": ""
     }

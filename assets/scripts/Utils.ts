@@ -34,6 +34,22 @@ export class Utils {
             }
         }
     }
+
+    static getRandomActors(targets:Mediator[], amount:number){
+        const random = Math.random();
+        const shuffTargets = targets.sort(()=> 0.5-random);
+        let result = []
+
+        if(shuffTargets.length>=amount){
+            for(let i=0;i<3;i++){
+                result.push(shuffTargets[i])
+            }
+        }else{
+            return shuffTargets;
+        }
+
+        return result;
+    }
 }
 
 

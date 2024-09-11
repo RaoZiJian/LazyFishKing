@@ -202,7 +202,6 @@ export class JumpAttackSkill extends MainSkill {
                             }, this._jumpLoopDuration * 0.5)
                         }
 
-
                     }, this.JUMP_LOOP_TIME);
 
                 }, this._jumpStartDuration)
@@ -264,22 +263,124 @@ export class HealingGroupSkill extends MainSkill {
 /**
  * 审时度势，对随机3名敌人造成200%攻击伤害，并且恢复自身造成伤害的40%的等量生命
  */
-export class WindMagicSkill extends MainSkill{
+export class WindMagicSkill extends MainSkill {
 
+    private CAST_BEGIN = "castBegin";
+    private CAST_END = "castEnd";
 
-    constructor(id: number, caster: Mediator, targets: Mediator[]){
-
-        let realTargets[]
-
-        super(id, caster, targets);
+    private _castBeginDuration: number = 0;
+    public get castBeginDuration(): number {
+        return this._castBeginDuration;
+    }
+    public set castBeginDuration(value: number) {
+        this._castBeginDuration = value;
     }
 
+    private _castEndDuration: number = 0;
+    public get castEndDuration(): number {
+        return this._castEndDuration;
+    }
+    public set castEndDuration(value: number) {
+        this._castEndDuration = value;
+    }
+
+    private _windMagicDuration: number = 0;
+    public get windMagicDuration(): number {
+        return this._windMagicDuration;
+    }
+    public set windMagicDuration(value: number) {
+        this._windMagicDuration = value;
+    }
+
+    private _animation: Animation;
+    public get animation(): Animation {
+        return this._animation;
+    }
+    public set animation(value: Animation) {
+        this._animation = value;
+    }
+
+    private _resPool: ResPool;
+    public get resPool(): ResPool {
+        return this._resPool;
+    }
+    public set resPool(value: ResPool) {
+        this._resPool = value;
+    }
+
+    private _canvas: Node;
+    public get canvas(): Node {
+        return this._canvas;
+    }
+    public set canvas(value: Node) {
+        this._canvas = value;
+    }
+
+    constructor(id: number, caster: Mediator, targets: Mediator[]) {
+        let realTargets = Utils.getAliveActors(targets);
+        super(id, caster, realTargets);
+
+        this.animation = this.caster.model.getComponent(Animation);
+        this.canvas = director.getScene().getChildByName("Canvas")
+        this.resPool = this.canvas.getComponent(ResPool);
+        this.castBeginDuration = this.animation.clips.filter(clip => clip.name == this.CAST_BEGIN)[0].duration;
+        this.castEndDuration = this.animation.clips.filter(clip => clip.name == this.CAST_END)[0].duration;
+        const windMagicNode = this.resPool.getWindMagicNode();
+        this.windMagicDuration = windMagicNode.getComponent(Animation).defaultClip.duration;
+
+        this.duration = this.castBeginDuration + this.windMagicDuration + this.castEndDuration;
+    }
 
     getMoveTarget(): Mediator {
-
+        return this.targets[0];
     }
+
+    getDamage(attacker: Mediator, defender: Mediator) {
+        return attacker.actor.attack * 2 - defender.actor.denfence;
+    }
+
     cast() {
+        if (this.caster && this.caster.isAlive) {
+            const realTargets = Utils.getRandomActors(Utils.getAliveActors(this.targets), 3);
+            if (realTargets && realTargets.length > 0) {
+                this.animation.play(this.CAST_BEGIN);
+                let totalDamage = 0;
+                this.caster.scheduleOnce(() => {
+                    realTargets.forEach(target => {
+                        const windMagicNode = this.resPool.getWindMagicNode();
+                        this.canvas.addChild(windMagicNode);
+                        windMagicNode.worldPosition = target.node.worldPosition;
 
+                        let damage = this.getDamage(this.caster, target);
+                        damage = damage > 0 ? damage : 1;
+                        const isDead = (target.actor.hp - damage) <= 0;
+                        if (!isDead) {
+                            const hurtCommand = new HurtCommand(target, damage);
+                            target.scheduleOnce(() => {
+                                hurtCommand.execute();
+                            }, this.windMagicDuration * 0.5)
+                        } else {
+                            const deadCommand = new DeadCommand(target);
+                            target.scheduleOnce(() => {
+                                deadCommand.execute();
+                            }, this.windMagicDuration * 0.5)
+                        }
+                        totalDamage += damage;
+                        target.scheduleOnce(() => {
+                            windMagicNode.removeFromParent();
+                            this.resPool.putNode(windMagicNode);
+                        }, this.windMagicDuration)
+                    })
+                }, this.castBeginDuration)
+
+                this.caster.scheduleOnce(() => {
+                    let healingValue = totalDamage * 0.4;
+                    let currentHp = this.caster.actor.hp + healingValue;
+                    currentHp = currentHp > this.caster.actor.cfg.hp ? this.caster.actor.cfg.hp : currentHp;
+                    this.caster.setHp(currentHp);
+                    this.animation.play(this.CAST_END);
+                }, this.castBeginDuration + this.windMagicDuration);
+            }
+        }
     }
-    
 }

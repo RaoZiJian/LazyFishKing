@@ -45,6 +45,14 @@ export class ResPool extends Component {
         this._clickBulletPrefab = value;
     }
 
+    private _windMagicPrefab: Prefab;
+    public get windMagicPrefab(): Prefab {
+        return this._windMagicPrefab;
+    }
+    public set windMagicPrefab(value: Prefab) {
+        this._windMagicPrefab = value;
+    }
+
     start() {
         resources.load(RES_URL.damage, Prefab, (error, prefab) => {
             if (prefab) {
@@ -69,6 +77,20 @@ export class ResPool extends Component {
                 this.clickBulletPrefab = prefab;
             }
         })
+    }
+
+    loadWindMagicSkill(){
+        resources.load(RES_URL.windMagic, Prefab, (error, prefab) => {
+            if (prefab) {
+                this.windMagicPrefab = prefab;
+            }
+        })
+    }
+
+    getWindMagicNode(){
+        if(this.windMagicPrefab){
+            return this.getNode(this.windMagicPrefab);
+        }
     }
 
     getDamageNode() {

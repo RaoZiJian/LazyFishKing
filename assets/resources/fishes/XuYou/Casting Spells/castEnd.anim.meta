@@ -2,12 +2,12 @@
   "ver": "2.0.3",
   "importer": "animation-clip",
   "imported": true,
-  "uuid": "90d9a999-dfd9-4872-9bfa-413942077762",
+  "uuid": "7df80761-b015-48f5-a617-902e5b787b83",
   "files": [
     ".cconb"
   ],
   "subMetas": {},
   "userData": {
-    "name": "casting"
+    "name": "castEnd"
   }
 }

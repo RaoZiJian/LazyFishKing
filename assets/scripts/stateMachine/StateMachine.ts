@@ -56,11 +56,11 @@ export class StateMachine extends Component {
      */
     getAnimationDuration(state: string): number {
         const clips = this.animation.clips;
-        const ani = clips.filter(clip => clip.name == this.currentState);
+        const ani = clips.filter(clip => clip.name == state);
         if (ani.length > 0) {
             return ani[0].duration;
         } else {
-            log("cannot find state" + state);
+            log("cannot find state " + state);
             return -1;
         }
     }
