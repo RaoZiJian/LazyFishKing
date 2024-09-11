@@ -2,13 +2,14 @@ import { instantiate, Prefab, resources, Node, tween, Vec3, director, Animation,
 import { Mediator } from "../mediator/Mediator";
 import { States } from "../stateMachine/StateMachine";
 import { Constants, RES_URL } from "../Constants";
-import { Bullet } from "../Bullet";
 import { DamageNode } from "../DamageNode";
 import { MainSkillFactory } from "../Skill/MainSkillFactory";
 import { MainSkill } from "../Skill/MainSkill";
 import { BuffNode } from "../BuffNode";
 import { ResPool } from "../ResPool";
 import { BattleField } from "../BattleField";
+import { Bullet } from "../Bullets/Bullet";
+import { ShootingMediator } from "../mediator/ShootingMediator";
 
 export abstract class Command {
 
@@ -383,7 +384,8 @@ export class BulletFireCommnad extends Command {
         if (this.target && this.target.isAlive) {
             const canvas = director.getScene().getChildByName('Canvas');
             canvas.addChild(this.bullet);
-            this.bullet.worldPosition = this.attacker.node.worldPosition;
+            const shootingMediator = this.attacker.getComponent(ShootingMediator);
+            this.bullet.worldPosition = shootingMediator.arrow.worldPosition;
             const bulletComponent = this.bullet.getComponent(Bullet);
             bulletComponent.fire(this.target, this.duration - 0.1, this.attacker.isReverse, () => {
                 this.bullet.removeFromParent();

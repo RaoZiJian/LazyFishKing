@@ -7,6 +7,7 @@ const { ccclass, property } = _decorator;
 
 @ccclass('XiaoQiaoMediator')
 export class XiaoQiaoMediator extends ShootingMediator {
+
     start() {
         this.stateMachine = this.getComponentInChildren(StateMachine);
         this.changeState(States.IDLE);
@@ -17,7 +18,7 @@ export class XiaoQiaoMediator extends ShootingMediator {
     }
 
     update(deltaTime: number) {
-        
+
     }
 }
 

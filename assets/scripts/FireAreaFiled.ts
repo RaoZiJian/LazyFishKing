@@ -2,9 +2,9 @@ import { _decorator, Component, director, instantiate, Node, Prefab, resources, 
 import { Constants, RES_URL } from './Constants';
 import { Mediator } from './mediator/Mediator';
 import { Utils } from './Utils';
-import { Bullet } from './Bullet';
 import { BulletFireExplosion, DeadCommand, HurtCommand } from './Command/Command';
 import { ResPool } from './ResPool';
+import { Bullet } from './Bullets/Bullet';
 const { ccclass, property } = _decorator;
 
 @ccclass('FireAreaFiled')

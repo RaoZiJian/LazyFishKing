@@ -1,5 +1,5 @@
 import { _decorator, Component, Node, Vec3, tween } from 'cc';
-import { Mediator } from './mediator/Mediator';
+import { Mediator } from '../mediator/Mediator';
 const { ccclass, property } = _decorator;
 
 @ccclass('Bullet')
