@@ -8,6 +8,7 @@ export const LazyFishId = {
     ZhaoYun: 7,
     XiaoQiao: 8,
     XuYou: 9,
+    XuChu: 10,
 }
 
 export const Constants = {
@@ -28,5 +29,5 @@ export const RES_URL = {
     tauntAudio: "fishes/Audios/taunt",
     clickEffect: "effects/click/clickEffect",
     clickBullet: "effects/clickBullet/clickBullet",
-    windMagic:"fishes/XuYou/XuYouSkillEffect"
+    windMagic: "fishes/XuYou/XuYouSkillEffect"
 }

@@ -106,9 +106,9 @@ export default {
       "deadAudio": "dying2",
       "defence": 10,
       "hp": 100,
-      "rage": "",
+      "rage": 10,
       "speed": 6,
-      "taunt": "",
+      "taunt": 1,
       "MainSkill": 1,
       "buff1": 2
     },
@@ -140,8 +140,24 @@ export default {
       "hp": 100,
       "rage": 30,
       "speed": 5,
-      "taunt": 200,
+      "taunt": 10,
       "MainSkill": 4,
+      "buff1": ""
+    },
+    "10": {
+      "id": 10,
+      "name": "XuChu",
+      "prefab": "fishes/XuChu/XuChuActor",
+      "attackType": 1,
+      "attack": 80,
+      "attackAudio": "footAttack1",
+      "deadAudio": "dying2",
+      "defence": 5,
+      "hp": 150,
+      "rage": 10,
+      "speed": 4,
+      "taunt": 20,
+      "MainSkill": 5,
       "buff1": ""
     }
   },
@@ -209,9 +225,16 @@ export default {
     },
     "4": {
       "id": 4,
-      "name": "风系魔法",
+      "name": "审时度势",
       "buffs": "",
       "shouldMove": 2,
+      "rageCost": 50
+    },
+    "5": {
+      "id": 5,
+      "name": "虎痴撼地",
+      "buffs": "",
+      "shouldMove": 1,
       "rageCost": 50
     }
   },

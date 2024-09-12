@@ -58,7 +58,7 @@ export class BattleField extends Component {
 
     fetchMyFishes() {
         //htttp request get my fishes
-        const myFishes = [9, 3, 3, 4, 8]
+        const myFishes = [9, 10, 3, 4, 8]
         for (let i = 0; i < myFishes.length; i++) {
             const id = myFishes[i];
             const fishURL = GameTsCfg.Actor[id].prefab;

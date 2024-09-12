@@ -1,12 +1,13 @@
 import { BuffNode } from "../BuffNode";
 import { DeadCommand, HurtCommand } from "../Command/Command";
+import { RES_URL } from "../Constants";
 import GameTsCfg from "../data/client/GameTsCfg";
 import { Mediator } from "../mediator/Mediator";
 import { ResPool } from "../ResPool";
 import { States } from "../stateMachine/StateMachine";
 import { Utils } from "../Utils";
 import { Buff } from "./Buff";
-import { Animation, tween, Vec3, Node, director } from 'cc';
+import { Animation, tween, Vec3, Node, director, AudioClip, resources } from 'cc';
 
 export abstract class MainSkill {
 
@@ -383,4 +384,49 @@ export class WindMagicSkill extends MainSkill {
             }
         }
     }
+}
+
+/**
+ * 虎痴撼地，对随机2名第二年造成300%伤害
+ */
+export class BladeWindSkill extends MainSkill {
+
+    private HEAVY_ATTACK_AUDIO = "boyHeavyHit1"
+    private BLADE_SLASHING_AUDIO = "bladeSlashing"
+
+    private _heayAttackClip: AudioClip;
+    public get heayAttackClip(): AudioClip {
+        return this._heayAttackClip;
+    }
+    public set heayAttackClip(value: AudioClip) {
+        this._heayAttackClip = value;
+    }
+
+    private _bladeSlashing: AudioClip;
+    public get bladeSlashing(): AudioClip {
+        return this._bladeSlashing;
+    }
+    public set bladeSlashing(value: AudioClip) {
+        this._bladeSlashing = value;
+    }
+
+    constructor(id: number, caster: Mediator, targets: Mediator[]) {
+        super(id, caster, targets);
+
+        resources.load(RES_URL.audioPrefix + this.HEAVY_ATTACK_AUDIO, AudioClip, (error, audioClip) => {
+            this.heayAttackClip = audioClip;
+        });
+
+        resources.load(RES_URL.audioPrefix + this.BLADE_SLASHING_AUDIO, AudioClip, (error, audioClip) => {
+            this.bladeSlashing = audioClip;
+        });
+    }
+
+    getMoveTarget(): Mediator {
+        throw new Error("Method not implemented.");
+    }
+    cast() {
+        throw new Error("Method not implemented.");
+    }
+
 }
