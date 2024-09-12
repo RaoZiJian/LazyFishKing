@@ -23,28 +23,28 @@ export class Utils {
     }
 
     static getNextDefender(targets: Mediator[]) {
-        if(targets && targets.length>0){
+        if (targets && targets.length > 0) {
             let aliveActors = this.getAliveActors(targets);
             const sortedActors = aliveActors.sort((a, b) => {
                 return b.actor.taunt - a.actor.taunt;
             })
-    
+
             if (sortedActors) {
                 return sortedActors[0];
             }
         }
     }
 
-    static getRandomActors(targets:Mediator[], amount:number){
+    static getRandomActors(targets: Mediator[], amount: number) {
         const random = Math.random();
-        const shuffTargets = targets.sort(()=> 0.5-random);
+        const shuffTargets = targets.sort(() => 0.5 - random);
         let result = []
 
-        if(shuffTargets.length>=amount){
-            for(let i=0;i<3;i++){
+        if (shuffTargets.length >= amount) {
+            for (let i = 0; i < amount; i++) {
                 result.push(shuffTargets[i])
             }
-        }else{
+        } else {
             return shuffTargets;
         }
 

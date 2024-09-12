@@ -19,6 +19,7 @@ export const Constants = {
     maxRage: 100,
     clickBulletFlyTime: 0.3,
     clickBulletDamage: 20,
+    bladeWindFlyDuration: 0.3
 }
 
 export const RES_URL = {
@@ -29,5 +30,7 @@ export const RES_URL = {
     tauntAudio: "fishes/Audios/taunt",
     clickEffect: "effects/click/clickEffect",
     clickBullet: "effects/clickBullet/clickBullet",
-    windMagic: "fishes/XuYou/XuYouSkillEffect"
+    windMagic: "fishes/XuYou/XuYouSkillEffect",
+    bladeWind1: "fishes/XuChu/SkillEffect/bladeEffect1",
+    bladeWind2: "fishes/XuChu/SkillEffect/bladeEffect2",
 }

@@ -53,6 +53,22 @@ export class ResPool extends Component {
         this._windMagicPrefab = value;
     }
 
+    private _bladeWindPrefab1: Prefab;
+    public get bladeWindPrefab1(): Prefab {
+        return this._bladeWindPrefab1;
+    }
+    public set bladeWindPrefab1(value: Prefab) {
+        this._bladeWindPrefab1 = value;
+    }
+
+    private _bladeWindPrefab2: Prefab;
+    public get bladeWindPrefab2(): Prefab {
+        return this._bladeWindPrefab2;
+    }
+    public set bladeWindPrefab2(value: Prefab) {
+        this._bladeWindPrefab2 = value;
+    }
+
     start() {
         resources.load(RES_URL.damage, Prefab, (error, prefab) => {
             if (prefab) {
@@ -85,6 +101,28 @@ export class ResPool extends Component {
                 this.windMagicPrefab = prefab;
             }
         })
+    }
+
+    loadBladeWindSkill(){
+        resources.load(RES_URL.bladeWind1, Prefab, (error, prefab) => {
+            if (prefab) {
+                this.bladeWindPrefab1 = prefab;
+            }
+        })
+
+        resources.load(RES_URL.bladeWind2, Prefab, (error, prefab) => {
+            if (prefab) {
+                this.bladeWindPrefab2 = prefab;
+            }
+        })
+    }
+
+    getBladeWindNode(type:number){
+        if(type == 0){
+            return this.getNode(this.bladeWindPrefab1);
+        }else if(type==1){
+            return this.getNode(this.bladeWindPrefab2);
+        }
     }
 
     getWindMagicNode(){

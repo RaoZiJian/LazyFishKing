@@ -85,12 +85,12 @@ export class Mediator extends Component {
         this._isAlive = value;
     }
 
-    private _attackAudioClip: AudioClip;
-    public get attackAudioClip(): AudioClip {
-        return this._attackAudioClip;
+    private _hurtAudioClip: AudioClip;
+    public get hurtAudioClip(): AudioClip {
+        return this._hurtAudioClip;
     }
-    public set attackAudioClip(value: AudioClip) {
-        this._attackAudioClip = value;
+    public set hurtAudioClip(value: AudioClip) {
+        this._hurtAudioClip = value;
     }
 
     private _deadAudioClip: AudioClip;
@@ -181,7 +181,7 @@ export class Mediator extends Component {
             this.stateMachine.changeState(States.IDLE);
         }, duration);
 
-        this.audio.playOneShot(this.attackAudioClip);
+        this.audio.playOneShot(this.hurtAudioClip);
     }
 
     dying() {
@@ -190,9 +190,9 @@ export class Mediator extends Component {
     }
 
     protected loadAudioRes() {
-        const attackAudioURL = RES_URL.audioPrefix + this.actor.cfg.attackAudio;
-        resources.load(attackAudioURL, AudioClip, (error, audioClip) => {
-            this.attackAudioClip = audioClip;
+        const hurtAudioURL = RES_URL.audioPrefix + this.actor.cfg.hurtAudio;
+        resources.load(hurtAudioURL, AudioClip, (error, audioClip) => {
+            this.hurtAudioClip = audioClip;
         });
 
         //读取死亡音效
@@ -211,7 +211,7 @@ export class Mediator extends Component {
         }
 
         let mainSkillId = this.actor.cfg.MainSkill;
-        if(GameTsCfg.MainSkill[mainSkillId].buffs!=""){
+        if (GameTsCfg.MainSkill[mainSkillId].buffs != "") {
             let skillBuffs = Utils.parseString(GameTsCfg.MainSkill[mainSkillId].buffs) as number[];
             skillBuffs.forEach(mainSkillBuffId => {
                 buffIds.push(mainSkillBuffId)

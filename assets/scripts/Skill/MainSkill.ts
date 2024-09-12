@@ -1,6 +1,7 @@
 import { BuffNode } from "../BuffNode";
+import { Bullet } from "../Bullets/Bullet";
 import { DeadCommand, HurtCommand } from "../Command/Command";
-import { RES_URL } from "../Constants";
+import { Constants, RES_URL } from "../Constants";
 import GameTsCfg from "../data/client/GameTsCfg";
 import { Mediator } from "../mediator/Mediator";
 import { ResPool } from "../ResPool";
@@ -50,10 +51,28 @@ export abstract class MainSkill {
         this._targets = value;
     }
 
+    private _resPool: ResPool;
+    public get resPool(): ResPool {
+        return this._resPool;
+    }
+    public set resPool(value: ResPool) {
+        this._resPool = value;
+    }
+
+    private _canvas: Node;
+    public get canvas(): Node {
+        return this._canvas;
+    }
+    public set canvas(value: Node) {
+        this._canvas = value;
+    }
+
     constructor(id: number, caster: Mediator, targets: Mediator[]) {
         this.skillId = id;
         this.caster = caster;
         this.targets = targets;
+        this.canvas = director.getScene().getChildByName("Canvas");
+        this.resPool = this.canvas.getComponent(ResPool);
 
         if (GameTsCfg.MainSkill[this.skillId]) {
             this.cfg = GameTsCfg.MainSkill[this.skillId];
@@ -97,16 +116,14 @@ export class SingleTauntSkill extends MainSkill {
             this.caster.audio.playOneShot(this.caster.buffAudios.get(buff.id));
         }
 
-
-        const resPool = director.getScene().getChildByName("Canvas").getComponent(ResPool);
-        const buffNode = resPool.getBuffNode();
+        const buffNode = this.resPool.getBuffNode();
 
         if (buffNode) {
             const buffComponent = buffNode.getComponent(BuffNode);
             buffComponent.label.string = "嘲讽 + " + tauntValue;
             this.caster.node.addChild(buffNode);
             this.caster.scheduleOnce(() => {
-                resPool.putNode(buffNode);
+                this.resPool.putNode(buffNode);
                 buffNode.removeFromParent();
             }, this.duration)
         }
@@ -186,7 +203,7 @@ export class JumpAttackSkill extends MainSkill {
 
                     this.caster.scheduleOnce(() => {
                         this.animation.play(this.ATTACKING);
-                        this.caster.audio.playOneShot(this.caster.attackAudioClip);
+                        this.caster.audio.playOneShot(this.caster.hurtAudioClip);
 
                         let damage = this.getDamage(this.defender);
                         damage = damage > 0 ? damage : 1;
@@ -241,7 +258,7 @@ export class HealingGroupSkill extends MainSkill {
             this.caster.audio.playOneShot(this.caster.buffAudios.get(buff.id));
         }
 
-        const resPool = director.getScene().getChildByName("Canvas").getComponent(ResPool);
+        const resPool = this.resPool.getComponent(ResPool);
         this.targets.forEach(target => {
             const buffNode = resPool.getBuffNode();
             if (buffNode) {
@@ -268,6 +285,7 @@ export class WindMagicSkill extends MainSkill {
 
     private CAST_BEGIN = "castBegin";
     private CAST_END = "castEnd";
+    private WIND_AUDIO = "wind"
 
     private _castBeginDuration: number = 0;
     public get castBeginDuration(): number {
@@ -301,29 +319,23 @@ export class WindMagicSkill extends MainSkill {
         this._animation = value;
     }
 
-    private _resPool: ResPool;
-    public get resPool(): ResPool {
-        return this._resPool;
+    private _windAudioClip: AudioClip;
+    public get windAudioClip(): AudioClip {
+        return this._windAudioClip;
     }
-    public set resPool(value: ResPool) {
-        this._resPool = value;
-    }
-
-    private _canvas: Node;
-    public get canvas(): Node {
-        return this._canvas;
-    }
-    public set canvas(value: Node) {
-        this._canvas = value;
+    public set windAudioClip(value: AudioClip) {
+        this._windAudioClip = value;
     }
 
     constructor(id: number, caster: Mediator, targets: Mediator[]) {
         let realTargets = Utils.getAliveActors(targets);
         super(id, caster, realTargets);
 
+        resources.load(RES_URL.audioPrefix + this.WIND_AUDIO, AudioClip, (error, audioClip) => {
+            this.windAudioClip = audioClip;
+        });
+
         this.animation = this.caster.model.getComponent(Animation);
-        this.canvas = director.getScene().getChildByName("Canvas")
-        this.resPool = this.canvas.getComponent(ResPool);
         this.castBeginDuration = this.animation.clips.filter(clip => clip.name == this.CAST_BEGIN)[0].duration;
         this.castEndDuration = this.animation.clips.filter(clip => clip.name == this.CAST_END)[0].duration;
         const windMagicNode = this.resPool.getWindMagicNode();
@@ -345,6 +357,7 @@ export class WindMagicSkill extends MainSkill {
             const realTargets = Utils.getRandomActors(Utils.getAliveActors(this.targets), 3);
             if (realTargets && realTargets.length > 0) {
                 this.animation.play(this.CAST_BEGIN);
+                this.caster.audio.playOneShot(this.windAudioClip);
                 let totalDamage = 0;
                 this.caster.scheduleOnce(() => {
                     realTargets.forEach(target => {
@@ -394,6 +407,8 @@ export class BladeWindSkill extends MainSkill {
     private HEAVY_ATTACK_AUDIO = "boyHeavyHit1"
     private BLADE_SLASHING_AUDIO = "bladeSlashing"
 
+    private SLASHING = "slashing"
+
     private _heayAttackClip: AudioClip;
     public get heayAttackClip(): AudioClip {
         return this._heayAttackClip;
@@ -410,23 +425,100 @@ export class BladeWindSkill extends MainSkill {
         this._bladeSlashing = value;
     }
 
+    private _animation: Animation;
+    public get animation(): Animation {
+        return this._animation;
+    }
+    public set animation(value: Animation) {
+        this._animation = value;
+    }
+
+    private _slashingDuration: number;
+    public get slashingDuration(): number {
+        return this._slashingDuration;
+    }
+    public set slashingDuration(value: number) {
+        this._slashingDuration = value;
+    }
+
+    private _bladeWindDuration: number;
+    public get bladeWindDuration(): number {
+        return this._bladeWindDuration;
+    }
+    public set bladeWindDuration(value: number) {
+        this._bladeWindDuration = value;
+    }
+
     constructor(id: number, caster: Mediator, targets: Mediator[]) {
-        super(id, caster, targets);
+        const realTargets = Utils.getRandomActors(Utils.getAliveActors(targets), 2);
+        super(id, caster, realTargets);
 
         resources.load(RES_URL.audioPrefix + this.HEAVY_ATTACK_AUDIO, AudioClip, (error, audioClip) => {
             this.heayAttackClip = audioClip;
         });
-
         resources.load(RES_URL.audioPrefix + this.BLADE_SLASHING_AUDIO, AudioClip, (error, audioClip) => {
             this.bladeSlashing = audioClip;
         });
+
+        this.animation = this.caster.model.getComponent(Animation);
+        this.slashingDuration = this.animation.clips.filter(clip => clip.name == this.SLASHING)[0].duration;
+        const bladeWind1 = this.resPool.getBladeWindNode(0).getComponent(Bullet);
+        const bladeWind2 = this.resPool.getBladeWindNode(1).getComponent(Bullet);
+        this.bladeWindDuration = Math.max(bladeWind1.bullet.getComponent(Animation).defaultClip.duration, bladeWind2.bullet.getComponent(Animation).defaultClip.duration);
+        this.duration = this.slashingDuration + Constants.bladeWindFlyDuration + this.bladeWindDuration;
     }
 
     getMoveTarget(): Mediator {
-        throw new Error("Method not implemented.");
+        return this.targets[0];
     }
+
+    getDamage(attacker: Mediator, defender: Mediator) {
+        return attacker.actor.attack * 3 - defender.actor.denfence;
+    }
+
     cast() {
-        throw new Error("Method not implemented.");
+        if (this.caster && this.caster.isAlive) {
+            const aliveTargets = Utils.getAliveActors(this.targets);
+            if (aliveTargets && aliveTargets.length < 2) {
+                this.targets = Utils.getRandomActors(Utils.getAliveActors(this.targets), 2);
+            }
+            if (this.targets && this.targets.length > 0) {
+                this.targets = this.targets;
+                this.animation.play(this.SLASHING);
+                this.caster.audio.playOneShot(this.heayAttackClip);
+                this.caster.audio.playOneShot(this.bladeSlashing);
+                this.caster.scheduleOnce(() => {
+                    for (let i = 0; i < this.targets.length; i++) {
+                        const target = this.targets[i];
+                        const bladeWind = this.resPool.getBladeWindNode(i);
+                        this.canvas.addChild(bladeWind);
+                        bladeWind.worldPosition = this.caster.model.worldPosition;
+                        tween(bladeWind)
+                            .to(Constants.bladeWindFlyDuration, { worldPosition: target.model.worldPosition })
+                            .call(() => {
+                                const bladeBullet = bladeWind.getComponent(Bullet);
+                                bladeBullet.bullet.getComponent(Animation).play();
+                                let damage = this.getDamage(this.caster, target);
+                                damage = damage > 0 ? damage : 1;
+                                const isDead = (target.actor.hp - damage) <= 0;
+                                bladeBullet.scheduleOnce(() => {
+                                    bladeWind.removeFromParent();
+                                    this.resPool.putNode(bladeWind);
+                                }, this.bladeWindDuration)
+
+                                if (!isDead) {
+                                    const hurtCommand = new HurtCommand(target, damage);
+                                    hurtCommand.execute();
+                                } else {
+                                    const deadCommand = new DeadCommand(target);
+                                    deadCommand.execute();
+                                }
+                            })
+                            .start();
+                    }
+                }, this.slashingDuration)
+            }
+        }
     }
 
 }
