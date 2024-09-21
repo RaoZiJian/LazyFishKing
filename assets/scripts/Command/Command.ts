@@ -10,6 +10,8 @@ import { ResPool } from "../ResPool";
 import { BattleField } from "../BattleField";
 import { Bullet } from "../Bullets/Bullet";
 import { ShootingMediator } from "../mediator/ShootingMediator";
+import { AttackType } from "../Actor/Actor";
+import { ChestMediator } from "../mediator/ChestMediator";
 
 export abstract class Command {
 
@@ -230,7 +232,11 @@ export class HurtCommand extends Command {
         super();
         this.target = target;
         this.damage = damage;
-        this.duration = this.target.stateMachine.getAnimationDuration(States.HURT);
+        if(target.actor.cfg.attackType == AttackType.Chest){
+            this.duration = Constants.chestHurtDuration;
+        }else{
+            this.duration = this.target.stateMachine.getAnimationDuration(States.HURT);
+        }
     }
 
     execute(): void {
@@ -271,7 +277,12 @@ export class DeadCommand extends Command {
     constructor(target: Mediator) {
         super();
         this.target = target;
-        this.duration = this.target.stateMachine.getAnimationDuration(States.DYING);
+        if(target.actor.cfg.attackType == AttackType.Chest){
+            let mediator = this.target as ChestMediator;
+            this.duration = mediator.getDyingDuration();   
+        }else{
+            this.duration = this.target.stateMachine.getAnimationDuration(States.DYING);
+        }
     }
 
     execute(): void {

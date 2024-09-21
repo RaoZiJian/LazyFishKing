@@ -23,7 +23,7 @@ export class BattleField extends Component {
     Loading: Node;
 
     @property(FireAreaFiled)
-    fireAreaField:FireAreaFiled;
+    fireAreaField: FireAreaFiled;
 
     private _leftFishes: Mediator[] = [];
     public get leftFishes(): Mediator[] {
@@ -183,8 +183,10 @@ export class BattleField extends Component {
                 }
             }
         })
-
-        if (this.isCanSkill(attacker)) {
+        let attackType = attacker.actor.cfg.attackType;
+        if (attackType == AttackType.Chest) {
+            headCommand = endCommand;
+        } else if (this.isCanSkill(attacker)) {
             const id = attacker.actor.cfg?.MainSkill;
             const skillCfg = GameTsCfg.MainSkill[id];
             const targets = isAttackerLeft ? this.rightFishes : this.leftFishes;
@@ -207,11 +209,7 @@ export class BattleField extends Component {
             }
 
         } else {
-            let attackType = attacker.actor.cfg.attackType;
-            if (attackType == AttackType.Healing) {
-
-            } else if (attackType == AttackType.MeleeAttack) {
-
+            if (attackType == AttackType.MeleeAttack) {
                 const targePostion = new Vec3(defender.node.worldPosition.x + defender.getModelWidth() * defender.isReverse, defender.node.worldPosition.y, defender.node.worldPosition.z);
                 const move = new MoveCommand(attacker, targePostion, Constants.moveDuration);
                 const attack = new AttackCommand(attacker, defender);

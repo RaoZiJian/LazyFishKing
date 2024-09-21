@@ -364,6 +364,8 @@ export class WindMagicSkill extends MainSkill {
                         const windMagicNode = this.resPool.getWindMagicNode();
                         this.canvas.addChild(windMagicNode);
                         windMagicNode.worldPosition = target.node.worldPosition;
+                        const windMagicAnimation = windMagicNode.getComponent(Animation);
+                        windMagicAnimation.play();
 
                         let damage = this.getDamage(this.caster, target);
                         damage = damage > 0 ? damage : 1;
@@ -380,7 +382,7 @@ export class WindMagicSkill extends MainSkill {
                             }, this.windMagicDuration * 0.5)
                         }
                         totalDamage += damage;
-                        target.scheduleOnce(() => {
+                        windMagicAnimation.scheduleOnce(() => {
                             windMagicNode.removeFromParent();
                             this.resPool.putNode(windMagicNode);
                         }, this.windMagicDuration)

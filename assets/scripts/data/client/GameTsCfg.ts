@@ -159,6 +159,54 @@ export default {
       "taunt": 20,
       "MainSkill": 5,
       "buff1": ""
+    },
+    "11": {
+      "id": 11,
+      "name": "ChestSmall",
+      "prefab": "effects/chest/ChestActorSmall",
+      "attackType": 3,
+      "attack": "",
+      "hurtAudio": "hurt1",
+      "deadAudio": "dying1",
+      "defence": 20,
+      "hp": 300,
+      "rage": "",
+      "speed": "",
+      "taunt": 100,
+      "MainSkill": 1,
+      "buff1": ""
+    },
+    "12": {
+      "id": 12,
+      "name": "ChestMiddle",
+      "prefab": "effects/chest/ChestActorMiddle",
+      "attackType": 3,
+      "attack": "",
+      "hurtAudio": "hurt1",
+      "deadAudio": "dying1",
+      "defence": 20,
+      "hp": 300,
+      "rage": "",
+      "speed": "",
+      "taunt": 100,
+      "MainSkill": 1,
+      "buff1": ""
+    },
+    "13": {
+      "id": 13,
+      "name": "ChestLarge",
+      "prefab": "effects/chest/ChestActorLarge",
+      "attackType": 3,
+      "attack": "",
+      "hurtAudio": "hurt1",
+      "deadAudio": "dying1",
+      "defence": 20,
+      "hp": 300,
+      "rage": "",
+      "speed": "",
+      "taunt": 100,
+      "MainSkill": 1,
+      "buff1": ""
     }
   },
   "Buff": {
@@ -257,7 +305,7 @@ export default {
     },
     "5": {
       "id": 5,
-      "fisheActors": "3,4,5,6,7"
+      "fisheActors": 11
     }
   }
 };

@@ -3,7 +3,7 @@ import GameTsCfg from "../data/client/GameTsCfg";
 export const AttackType = {
     MeleeAttack: 1,
     Shooting: 2,
-    Healing: 3
+    Chest: 3
 }
 
 export class ActorIdFactory {

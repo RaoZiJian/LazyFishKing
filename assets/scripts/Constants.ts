@@ -1,14 +1,17 @@
-export const LazyFishId = {
-    Crab: 1,
-    Prianha: 2,
-    HuangZhong: 3,
-    LvMeng: 4,
-    Octopus: 5,
-    ZhangLiao: 6,
-    ZhaoYun: 7,
-    XiaoQiao: 8,
-    XuYou: 9,
-    XuChu: 10,
+export enum LazyFishId {
+    Crab = 1,
+    Prianha = 2,
+    HuangZhong = 3,
+    LvMeng = 4,
+    Octopus = 5,
+    ZhangLiao = 6,
+    ZhaoYun = 7,
+    XiaoQiao = 8,
+    XuYou = 9,
+    XuChu = 10,
+    ChestSmall = 11,
+    ChestMiddle = 12,
+    ChestLarge = 13
 }
 
 export const Constants = {
@@ -19,7 +22,8 @@ export const Constants = {
     maxRage: 100,
     clickBulletFlyTime: 0.3,
     clickBulletDamage: 20,
-    bladeWindFlyDuration: 0.3
+    bladeWindFlyDuration: 0.3,
+    chestHurtDuration:0.5,
 }
 
 export const RES_URL = {
