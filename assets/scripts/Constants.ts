@@ -37,4 +37,5 @@ export const RES_URL = {
     windMagic: "fishes/XuYou/XuYouSkillEffect",
     bladeWind1: "fishes/XuChu/SkillEffect/bladeEffect1",
     bladeWind2: "fishes/XuChu/SkillEffect/bladeEffect2",
+    popUpPrefab:"popup/PopupNode"
 }
