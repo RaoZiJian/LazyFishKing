@@ -289,23 +289,7 @@ export default {
   "Stage": {
     "1": {
       "id": 1,
-      "fisheActors": "1,1,1"
-    },
-    "2": {
-      "id": 2,
-      "fisheActors": "2,2,3"
-    },
-    "3": {
-      "id": 3,
-      "fisheActors": "3,3,4"
-    },
-    "4": {
-      "id": 4,
-      "fisheActors": "3,4,5,6"
-    },
-    "5": {
-      "id": 5,
-      "fisheActors": 11
+      "fisheActors": "10,10,10,10,10"
     }
   }
 };

@@ -1,4 +1,4 @@
-import { _decorator, Component, director, instantiate, log, Node, Prefab, profiler, resources, UIOpacity, Vec3 } from 'cc';
+import { _decorator, Component, director, instantiate, Label, log, Node, Prefab, profiler, resources, UIOpacity, Vec3 } from 'cc';
 import GameTsCfg from './data/client/GameTsCfg';
 import { Constants, LazyFishId, RES_URL } from './Constants';
 import { Utils } from './Utils';
@@ -24,6 +24,9 @@ export class BattleField extends Component {
 
     @property(FireAreaFiled)
     fireAreaField: FireAreaFiled;
+
+    @property(Label)
+    stageLabel: Label;
 
     private _leftFishes: Mediator[] = [];
     public get leftFishes(): Mediator[] {
@@ -109,6 +112,8 @@ export class BattleField extends Component {
         this.Loading.getComponent(UIOpacity).opacity = 255;
         this.fetchMyFishes();
         this.initEnemyFishes()
+        this.stageLabel.getComponent(UIOpacity).opacity = 0;
+        this.stageLabel.string = "第" + this.currentStage + "关";
     }
 
     getNextActionActor(targets: Mediator[]) {
@@ -161,14 +166,14 @@ export class BattleField extends Component {
         let headCommand: Command;
         let endCommand = new EndTurnCoomand(() => {
             if (this.checkGameover()) {
-                //todo game over
+                this.stageLabel.string = "游戏失败";
             } else {
                 const rightAliveFishes = Utils.getAliveActors(this.rightFishes);
                 if (rightAliveFishes && rightAliveFishes.length == 0) {
                     if (this.hasNextStage()) {
                         this.gotoNextStage();
                     } else {
-                        // todo game win
+                        this.stageLabel.string = "游戏胜利";
                     }
                 } else {
                     this.leftFishes = Utils.getAliveActors(this.leftFishes);
@@ -258,6 +263,7 @@ export class BattleField extends Component {
     gotoNextStage() {
         this.Loading.getComponent(UIOpacity).opacity = 255;
         this.currentStage++;
+        this.stageLabel.string = "第" + this.currentStage + "关";
         this.leftFishes = Utils.getAliveActors(this.leftFishes);
 
         this.rightFishes = [];
@@ -272,6 +278,7 @@ export class BattleField extends Component {
         if (this._allPrefabCount == this._prefabLoadingCount && (this._isBattleBegin == false)) {
             this._isBattleBegin = true;
             this.Loading.getComponent(UIOpacity).opacity = 0;
+            this.stageLabel.getComponent(UIOpacity).opacity = 255;
             this.battleLoop(([...this.leftFishes, ...this.rightFishes]));
             this.fireAreaField.openFire(this.rightFishes);
         }
