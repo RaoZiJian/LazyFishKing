@@ -2,7 +2,7 @@ export default {
   "Actor": {
     "1": {
       "id": 1,
-      "name": "Crab",
+      "name": "螃蟹",
       "prefab": "fishes/Crab/CrabActor",
       "attackType": 1,
       "attack": 40,
@@ -14,11 +14,12 @@ export default {
       "speed": 2,
       "taunt": 20,
       "MainSkill": 1,
+      "avatar": "fishes/Avatars/crab",
       "buff1": 1
     },
     "2": {
       "id": 2,
-      "name": "Prianha",
+      "name": "水虎鱼",
       "prefab": "fishes/Piranha/PrianhaActor",
       "attackType": 1,
       "attack": 30,
@@ -30,11 +31,12 @@ export default {
       "speed": 3,
       "taunt": 30,
       "MainSkill": 1,
+      "avatar": "fishes/Avatars/prianha",
       "buff1": 2
     },
     "3": {
       "id": 3,
-      "name": "HuangZhong",
+      "name": "黄忠",
       "prefab": "fishes/HuangZhong/HuangZhongActor",
       "attackType": 2,
       "attack": 50,
@@ -46,11 +48,12 @@ export default {
       "speed": 5,
       "taunt": 10,
       "MainSkill": 1,
+      "avatar": "fishes/Avatars/huangzhong",
       "buff1": 1
     },
     "4": {
       "id": 4,
-      "name": "LvMeng",
+      "name": "吕蒙",
       "prefab": "fishes/LvMeng/LvMengActor",
       "attackType": 1,
       "attack": 60,
@@ -62,11 +65,12 @@ export default {
       "speed": 4,
       "taunt": 20,
       "MainSkill": 2,
+      "avatar": "fishes/Avatars/lvmeng",
       "buff1": 2
     },
     "5": {
       "id": 5,
-      "name": "Octopus",
+      "name": "章鱼",
       "prefab": "fishes/Octopus/OctopusActor",
       "attackType": 1,
       "attack": 20,
@@ -78,11 +82,12 @@ export default {
       "speed": 4,
       "taunt": 20,
       "MainSkill": 2,
+      "avatar": "fishes/Avatars/octopus",
       "buff1": 1
     },
     "6": {
       "id": 6,
-      "name": "ZhaoLiao",
+      "name": "张辽",
       "prefab": "fishes/ZhangLiao/ZhangLiaoActor",
       "attackType": 1,
       "attack": 30,
@@ -94,11 +99,12 @@ export default {
       "speed": 2,
       "taunt": 20,
       "MainSkill": 1,
+      "avatar": "fishes/Avatars/zhangliao",
       "buff1": 1
     },
     "7": {
       "id": 7,
-      "name": "ZhaoYun",
+      "name": "赵云",
       "prefab": "fishes/ZhaoYun/ZhaoYunActor",
       "attackType": 1,
       "attack": 80,
@@ -110,11 +116,12 @@ export default {
       "speed": 6,
       "taunt": 1,
       "MainSkill": 1,
+      "avatar": "fishes/Avatars/zhaoyun",
       "buff1": 2
     },
     "8": {
       "id": 8,
-      "name": "XiaoQiao",
+      "name": "小乔",
       "prefab": "fishes/XiaoQiao/XiaoQiaoActor",
       "attackType": 2,
       "attack": 20,
@@ -126,11 +133,12 @@ export default {
       "speed": 5,
       "taunt": 10,
       "MainSkill": 3,
+      "avatar": "fishes/Avatars/xiaoqiao",
       "buff1": ""
     },
     "9": {
       "id": 9,
-      "name": "XuYou",
+      "name": "许攸",
       "prefab": "fishes/XuYou/XuYouActor",
       "attackType": 2,
       "attack": 40,
@@ -142,11 +150,12 @@ export default {
       "speed": 5,
       "taunt": 10,
       "MainSkill": 4,
+      "avatar": "fishes/Avatars/xuchu",
       "buff1": ""
     },
     "10": {
       "id": 10,
-      "name": "XuChu",
+      "name": "许褚",
       "prefab": "fishes/XuChu/XuChuActor",
       "attackType": 1,
       "attack": 80,
@@ -158,6 +167,7 @@ export default {
       "speed": 7,
       "taunt": 20,
       "MainSkill": 5,
+      "avatar": "fishes/Avatars/xuyou",
       "buff1": ""
     },
     "11": {
@@ -174,6 +184,7 @@ export default {
       "speed": "",
       "taunt": 100,
       "MainSkill": 1,
+      "avatar": "",
       "buff1": ""
     },
     "12": {
@@ -190,6 +201,7 @@ export default {
       "speed": "",
       "taunt": 100,
       "MainSkill": 1,
+      "avatar": "",
       "buff1": ""
     },
     "13": {
@@ -206,6 +218,7 @@ export default {
       "speed": "",
       "taunt": 100,
       "MainSkill": 1,
+      "avatar": "",
       "buff1": ""
     }
   },

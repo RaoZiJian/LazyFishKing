@@ -64,6 +64,13 @@ export class BottomMenu extends Component {
     addRolePopUp() {
         if (this.popUp) {
             this.popUp.title.string = "角色升级";
+            resources.load(RES_URL.roleScollViewPrefab, Prefab, (error, prefab)=>{
+                if(prefab){
+                    let roleScollViewNode = instantiate(prefab);
+                    this.popUp.node.addChild(roleScollViewNode);
+                    roleScollViewNode.setSiblingIndex(3);
+                }
+            })
         }
     }
 

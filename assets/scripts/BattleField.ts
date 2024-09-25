@@ -8,6 +8,7 @@ import { AttackCommand, BulletFireCommnad, Command, EndTurnCoomand, MainSkillCas
 import { ShootingMediator } from './mediator/ShootingMediator';
 import { BuffNode } from './BuffNode';
 import { FireAreaFiled } from './FireAreaFiled';
+import { AccountInfo } from './AccountInfo';
 const { ccclass, property } = _decorator;
 
 @ccclass('BattleField')
@@ -72,6 +73,8 @@ export class BattleField extends Component {
                     this.node.addChild(fishNode);
                     fishNode.setPosition(this.LeftFishAreas[i].position);
                     const mediator = fishNode.getComponent(Mediator);
+                    AccountInfo.getInstance().actors.push(mediator.actor);
+                    
                     this.leftFishes.push(mediator);
                     this._prefabLoadingCount++;
                 }
@@ -111,9 +114,18 @@ export class BattleField extends Component {
         profiler.hideStats();
         this.Loading.getComponent(UIOpacity).opacity = 255;
         this.fetchMyFishes();
+        this.initAccountInfo();
         this.initEnemyFishes()
         this.stageLabel.getComponent(UIOpacity).opacity = 0;
         this.stageLabel.string = "第" + this.currentStage + "关";
+    }
+
+    initAccountInfo() {
+        //todo requst accountInfo
+        let account = AccountInfo.getInstance();
+        account.name = "阿成";
+        account.allExp = 0;
+        account.avatarUrl
     }
 
     getNextActionActor(targets: Mediator[]) {

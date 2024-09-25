@@ -23,7 +23,8 @@ export const Constants = {
     clickBulletFlyTime: 0.3,
     clickBulletDamage: 20,
     bladeWindFlyDuration: 0.3,
-    chestHurtDuration:0.5,
+    chestHurtDuration: 0.5,
+    levelUpExp: 20,
 }
 
 export const RES_URL = {
@@ -37,5 +38,7 @@ export const RES_URL = {
     windMagic: "fishes/XuYou/XuYouSkillEffect",
     bladeWind1: "fishes/XuChu/SkillEffect/bladeEffect1",
     bladeWind2: "fishes/XuChu/SkillEffect/bladeEffect2",
-    popUpPrefab:"popup/PopupNode"
+    popUpPrefab: "popup/PopupNode",
+    roleScollViewPrefab: "popup/RoleScrollView",
+    roleItem: "popup/RoleItem"
 }

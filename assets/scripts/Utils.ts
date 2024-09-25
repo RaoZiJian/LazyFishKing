@@ -1,3 +1,4 @@
+import { Constants } from "./Constants";
 import { Mediator } from "./mediator/Mediator";
 
 export class Utils {
@@ -49,6 +50,38 @@ export class Utils {
         }
 
         return result;
+    }
+
+    static getFakeDataLevel(exp: number) {
+        return exp / Constants.levelUpExp + 1;
+    }
+
+    static getFakeDataAttack(baseAttack: number, level: number): number {
+        return baseAttack + (level - 1) * Constants.levelUpExp;
+    }
+
+    static getExpRequire(level: number) {
+        return (level - 1) * Constants.levelUpExp;
+    }
+
+    /**
+     * 
+     * @param exp 总经验值
+     * @returns 目前等级下还剩余多少额外的经验值
+     */
+    static getCurrentLevelExp(exp: number) {
+        const requireExp = this.getExpRequire(this.getFakeDataLevel(exp))
+        return exp - requireExp;
+    }
+
+    /**
+     * 计算当前经验值升级到下一级要花费的钱
+     * @param allexp 当前总经验值
+     * @param level 目标等级
+     * @returns 当前经验值升级到下一级要花费的钱
+     */
+    static getFakeDataLevelUpCoinCost(allexp: number) {
+        return this.getCurrentLevelExp(allexp) * 10;
     }
 }
 
