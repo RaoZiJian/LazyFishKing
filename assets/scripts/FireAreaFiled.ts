@@ -52,7 +52,7 @@ export class FireAreaFiled extends Component {
             if (defender && defender.isAlive) {
                 const resPool = this.canvas.getComponent(ResPool);
                 const bullet = resPool.getClickBulletNode();
-                this.canvas.addChild(bullet);
+                this.canvas.getChildByName("EffectLayer").addChild(bullet);
                 bullet.worldPosition = clickPosition;
 
                 bullet.getComponent(Bullet).fire(defender, Constants.clickBulletFlyTime, 1, () => {

@@ -45,7 +45,6 @@ export class BottomMenu extends Component {
                 let popUpNode = instantiate(prefab)
                 this.popUp = popUpNode.getComponent(PopUp);
                 let uitrans = popUpNode.getComponent(UITransform);
-                uitrans.priority = 1;
                 switch (name) {
                     case this.ROLE_POP_UP:
                         this.addRolePopUp();
@@ -57,7 +56,7 @@ export class BottomMenu extends Component {
                         break;
                 }
 
-                director.getScene().getChildByName("Canvas").addChild(popUpNode);
+                director.getScene().getChildByName("Canvas").getChildByName("UILayer").addChild(popUpNode);
             }
         })
     }

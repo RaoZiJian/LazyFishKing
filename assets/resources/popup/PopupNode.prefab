@@ -77,7 +77,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "MaskBtn",
+    "_name": "CloseMask",
     "_objFlags": 0,
     "__editorExtras__": {},
     "_parent": {
@@ -154,7 +154,7 @@
   },
   {
     "__type__": "cc.CompPrefabInfo",
-    "fileId": "8aRte3jJJMz42g1Pag5Eu0"
+    "fileId": "12c5fvLuVEs7xq7riFJm2c"
   },
   {
     "__type__": "cc.Sprite",
@@ -199,7 +199,7 @@
   },
   {
     "__type__": "cc.CompPrefabInfo",
-    "fileId": "fbW9WETfRFW5ERks8CIbJq"
+    "fileId": "85GtL4ckhNmZfUESS/uLtU"
   },
   {
     "__type__": "cc.Button",
@@ -269,7 +269,7 @@
   },
   {
     "__type__": "cc.CompPrefabInfo",
-    "fileId": "c8i89YmmJARLV24OQY5+CI"
+    "fileId": "0axGoSOJhJ6olqovnWW8b4"
   },
   {
     "__type__": "cc.PrefabInfo",
@@ -279,7 +279,7 @@
     "asset": {
       "__id__": 0
     },
-    "fileId": "2d4G/3v6NOOp+RMBDeXvW5",
+    "fileId": "a40h3aEuhPWoXpMQ6mwj0u",
     "instance": null,
     "targetOverrides": null,
     "nestedPrefabInstanceRoots": null

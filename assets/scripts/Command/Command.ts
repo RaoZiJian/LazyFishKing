@@ -393,8 +393,8 @@ export class BulletFireCommnad extends Command {
 
     execute(): void {
         if (this.target && this.target.isAlive) {
-            const canvas = director.getScene().getChildByName('Canvas');
-            canvas.addChild(this.bullet);
+            const effectLayer = director.getScene().getChildByName("Canvas").getChildByName('EffectLayer');
+            effectLayer.addChild(this.bullet);
             const shootingMediator = this.attacker.getComponent(ShootingMediator);
             this.bullet.worldPosition = shootingMediator.arrow.worldPosition;
             const bulletComponent = this.bullet.getComponent(Bullet);

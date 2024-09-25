@@ -255,41 +255,46 @@ export default {
       "name": "嘲讽",
       "buffs": 1,
       "shouldMove": 1,
-      "rageCost": 50
+      "rageCost": 50,
+      "audio": ""
     },
     "2": {
       "id": 2,
       "name": "跳劈",
       "buffs": "",
       "shouldMove": 2,
-      "rageCost": 50
+      "rageCost": 50,
+      "audio": ""
     },
     "3": {
       "id": 3,
       "name": "群体治疗",
       "buffs": 3,
       "shouldMove": 1,
-      "rageCost": 50
+      "rageCost": 50,
+      "audio": ""
     },
     "4": {
       "id": 4,
       "name": "审时度势",
       "buffs": "",
       "shouldMove": 2,
-      "rageCost": 50
+      "rageCost": 50,
+      "audio": "wind"
     },
     "5": {
       "id": 5,
       "name": "虎痴撼地",
       "buffs": "",
-      "shouldMove": 2,
-      "rageCost": 50
+      "shouldMove": 1,
+      "rageCost": 50,
+      "audio": "boyHeavyHit1,bladeSlashing"
     }
   },
   "Stage": {
     "1": {
       "id": 1,
-      "fisheActors": "10,10,10,10,10"
+      "fisheActors": "3,3,3,3"
     }
   }
 };

@@ -319,22 +319,9 @@ export class WindMagicSkill extends MainSkill {
         this._animation = value;
     }
 
-    private _windAudioClip: AudioClip;
-    public get windAudioClip(): AudioClip {
-        return this._windAudioClip;
-    }
-    public set windAudioClip(value: AudioClip) {
-        this._windAudioClip = value;
-    }
-
     constructor(id: number, caster: Mediator, targets: Mediator[]) {
         let realTargets = Utils.getAliveActors(targets);
         super(id, caster, realTargets);
-
-        resources.load(RES_URL.audioPrefix + this.WIND_AUDIO, AudioClip, (error, audioClip) => {
-            this.windAudioClip = audioClip;
-        });
-
         this.animation = this.caster.model.getComponent(Animation);
         this.castBeginDuration = this.animation.clips.filter(clip => clip.name == this.CAST_BEGIN)[0].duration;
         this.castEndDuration = this.animation.clips.filter(clip => clip.name == this.CAST_END)[0].duration;
@@ -357,12 +344,12 @@ export class WindMagicSkill extends MainSkill {
             const realTargets = Utils.getRandomActors(Utils.getAliveActors(this.targets), 3);
             if (realTargets && realTargets.length > 0) {
                 this.animation.play(this.CAST_BEGIN);
-                this.caster.audio.playOneShot(this.windAudioClip);
+                this.caster.audio.playOneShot(this.caster.skillAudioMap.get(this.WIND_AUDIO));
                 let totalDamage = 0;
                 this.caster.scheduleOnce(() => {
                     realTargets.forEach(target => {
                         const windMagicNode = this.resPool.getWindMagicNode();
-                        this.canvas.addChild(windMagicNode);
+                        this.canvas.getChildByName("EffectLayer").addChild(windMagicNode);
                         windMagicNode.worldPosition = target.node.worldPosition;
                         const windMagicAnimation = windMagicNode.getComponent(Animation);
                         windMagicAnimation.play();
@@ -411,22 +398,6 @@ export class BladeWindSkill extends MainSkill {
 
     private SLASHING = "slashing"
 
-    private _heayAttackClip: AudioClip;
-    public get heayAttackClip(): AudioClip {
-        return this._heayAttackClip;
-    }
-    public set heayAttackClip(value: AudioClip) {
-        this._heayAttackClip = value;
-    }
-
-    private _bladeSlashing: AudioClip;
-    public get bladeSlashing(): AudioClip {
-        return this._bladeSlashing;
-    }
-    public set bladeSlashing(value: AudioClip) {
-        this._bladeSlashing = value;
-    }
-
     private _animation: Animation;
     public get animation(): Animation {
         return this._animation;
@@ -455,13 +426,6 @@ export class BladeWindSkill extends MainSkill {
         const realTargets = Utils.getRandomActors(Utils.getAliveActors(targets), 2);
         super(id, caster, realTargets);
 
-        resources.load(RES_URL.audioPrefix + this.HEAVY_ATTACK_AUDIO, AudioClip, (error, audioClip) => {
-            this.heayAttackClip = audioClip;
-        });
-        resources.load(RES_URL.audioPrefix + this.BLADE_SLASHING_AUDIO, AudioClip, (error, audioClip) => {
-            this.bladeSlashing = audioClip;
-        });
-
         this.animation = this.caster.model.getComponent(Animation);
         this.slashingDuration = this.animation.clips.filter(clip => clip.name == this.SLASHING)[0].duration;
         const bladeWind1 = this.resPool.getBladeWindNode(0).getComponent(Bullet);
@@ -487,13 +451,13 @@ export class BladeWindSkill extends MainSkill {
             if (this.targets && this.targets.length > 0) {
                 this.targets = this.targets;
                 this.animation.play(this.SLASHING);
-                this.caster.audio.playOneShot(this.heayAttackClip);
-                this.caster.audio.playOneShot(this.bladeSlashing);
+                this.caster.audio.playOneShot(this.caster.skillAudioMap.get(this.HEAVY_ATTACK_AUDIO));
+                this.caster.audio.playOneShot(this.caster.skillAudioMap.get(this.BLADE_SLASHING_AUDIO));
                 this.caster.scheduleOnce(() => {
                     for (let i = 0; i < this.targets.length; i++) {
                         const target = this.targets[i];
                         const bladeWind = this.resPool.getBladeWindNode(i);
-                        this.canvas.addChild(bladeWind);
+                        this.canvas.getChildByName("EffectLayer").addChild(bladeWind);
                         bladeWind.worldPosition = this.caster.model.worldPosition;
                         tween(bladeWind)
                             .to(Constants.bladeWindFlyDuration, { worldPosition: target.model.worldPosition })

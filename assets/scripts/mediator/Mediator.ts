@@ -1,4 +1,4 @@
-import { _decorator, AudioClip, AudioSource, Component, log, Node, ProgressBar, resources, UIOpacity, UITransform, Vec3 } from 'cc';
+import { _decorator, AudioClip, AudioSource, Component, error, log, Node, ProgressBar, resources, UIOpacity, UITransform, Vec3 } from 'cc';
 import { StateMachine, States } from '../stateMachine/StateMachine';
 import { Actor } from '../Actor/Actor';
 import { Constants, RES_URL } from '../Constants';
@@ -28,6 +28,14 @@ export class Mediator extends Component {
 
     @property(AudioSource)
     audio: AudioSource;
+
+    private _skillAudioMap: Map<string, AudioClip> = new Map<string, AudioClip>();
+    public get skillAudioMap(): Map<string, AudioClip> {
+        return this._skillAudioMap;
+    }
+    public set skillAudioMap(value: Map<string, AudioClip>) {
+        this._skillAudioMap = value;
+    }
 
     private _uiOpacity: UIOpacity;
     /**
@@ -211,8 +219,9 @@ export class Mediator extends Component {
         }
 
         let mainSkillId = this.actor.cfg.MainSkill;
-        if (GameTsCfg.MainSkill[mainSkillId].buffs != "") {
-            let skillBuffs = Utils.parseString(GameTsCfg.MainSkill[mainSkillId].buffs) as number[];
+        const skill = GameTsCfg.MainSkill[mainSkillId];
+        if (skill.buffs != "") {
+            let skillBuffs = Utils.parseString(skill.buffs) as number[];
             skillBuffs.forEach(mainSkillBuffId => {
                 buffIds.push(mainSkillBuffId)
             });
@@ -228,6 +237,18 @@ export class Mediator extends Component {
                 });
             }
         });
+
+        //读取主技能音效
+        if (skill && skill.audio && skill.audio != "") {
+            let skillAudios = Utils.parseString(skill.audio) as string[];
+            skillAudios.forEach(skillAudioId=>{
+                resources.load(RES_URL.audioPrefix + skillAudioId, AudioClip, (error, audioClip)=>{
+                    if(audioClip){
+                        this.skillAudioMap.set(skillAudioId, audioClip);
+                    }
+                })
+            })
+        }
     }
 }
 
