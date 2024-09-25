@@ -51,19 +51,19 @@ export class RoleScrollView extends Component {
             if (prefab) {
                 let roleItemNode = instantiate(prefab);
                 let roleItem = roleItemNode.getComponent(RoleItem);
-                resources.load(avtarUrl, SpriteFrame, (error, spriteframe) => {
+                resources.load(avtarUrl + "/spriteFrame", SpriteFrame, (error, spriteframe) => {
                     if (spriteframe) {
                         roleItem.avatar.spriteFrame = spriteframe;
                     }
                 })
 
-                resources.load(avatarBg, SpriteFrame, (error, spriteframe) => {
+                resources.load(avatarBg + "/spriteFrame", SpriteFrame, (error, spriteframe) => {
                     roleItem.avatarBg.spriteFrame = spriteframe;
                 })
 
                 roleItem.roleName.string = name;
-                roleItem.roleLevel.string = Utils.getFakeDataLevel(exp).toString();
-                roleItem.roleAttack.string = Utils.getFakeDataAttack(baseAttack, Utils.getFakeDataLevel(exp)).toString();
+                roleItem.roleLevel.string = "Lv." + Utils.getFakeDataLevel(exp).toString();
+                roleItem.roleAttack.string = "攻击力:" + Utils.getFakeDataAttack(baseAttack, Utils.getFakeDataLevel(exp)).toString();
                 const currentExp = Utils.getCurrentLevelExp(exp);
                 const percent = currentExp / Constants.levelUpExp;
                 roleItem.percent.string = (currentExp / Constants.levelUpExp).toString() + "%";

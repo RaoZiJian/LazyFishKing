@@ -3,7 +3,7 @@ import GameTsCfg from './data/client/GameTsCfg';
 import { Constants, LazyFishId, RES_URL } from './Constants';
 import { Utils } from './Utils';
 import { Mediator } from './mediator/Mediator';
-import { AttackType } from './Actor/Actor';
+import { Actor, AttackType } from './Actor/Actor';
 import { AttackCommand, BulletFireCommnad, Command, EndTurnCoomand, MainSkillCastCommand, MoveCommand, ShootingCommand } from './Command/Command';
 import { ShootingMediator } from './mediator/ShootingMediator';
 import { BuffNode } from './BuffNode';
@@ -73,7 +73,8 @@ export class BattleField extends Component {
                     this.node.addChild(fishNode);
                     fishNode.setPosition(this.LeftFishAreas[i].position);
                     const mediator = fishNode.getComponent(Mediator);
-                    AccountInfo.getInstance().actors.push(mediator.actor);
+                    let actor = new Actor(id)
+                    AccountInfo.getInstance().actors.push(actor);
                     
                     this.leftFishes.push(mediator);
                     this._prefabLoadingCount++;

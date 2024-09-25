@@ -41,7 +41,7 @@ export class AccountInfo {
         this._allExp = value;
     }
 
-    private _actors: Actor[];
+    private _actors: Actor[] = [];
     public get actors(): Actor[] {
         return this._actors;
     }
