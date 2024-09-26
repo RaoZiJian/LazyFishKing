@@ -5,6 +5,7 @@ import { Utils } from './Utils';
 import { BulletFireExplosion, DeadCommand, HurtCommand } from './Command/Command';
 import { ResPool } from './ResPool';
 import { Bullet } from './Bullets/Bullet';
+import { AccountInfo } from './AccountInfo';
 const { ccclass, property } = _decorator;
 
 @ccclass('FireAreaFiled')
@@ -58,9 +59,10 @@ export class FireAreaFiled extends Component {
                 bullet.getComponent(Bullet).fire(defender, Constants.clickBulletFlyTime, 1, () => {
                     resPool.putNode(bullet);
                     bullet.removeFromParent();
-                    const isDead = (defender.actor.hp - Constants.clickBulletDamage) <= 0;
+                    let clickBulletDamage = Math.max(1, AccountInfo.getInstance().getMyActor().attack - defender.actor.denfence);
+                    const isDead = (defender.actor.hp - clickBulletDamage) <= 0;
                     if (!isDead) {
-                        const hurtCommand = new HurtCommand(defender, Constants.clickBulletDamage);
+                        const hurtCommand = new HurtCommand(defender, clickBulletDamage);
                         hurtCommand.execute();
                     } else {
                         const deadCommand = new DeadCommand(defender);

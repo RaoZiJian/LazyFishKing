@@ -7,10 +7,13 @@ const { ccclass, property } = _decorator;
 
 @ccclass('LvMengMediator')
 export class LvMengMediator extends Mediator {
-    start() {
+    onLoad() {
+        this.actor = new Actor(LazyFishId.LvMeng);
+    }
+
+    start(): void {
         this.stateMachine = this.getComponentInChildren(StateMachine);
         this.changeState(States.IDLE);
-        this.actor = new Actor(LazyFishId.LvMeng);
         this.initRage();
         this.loadAudioRes();
         this.addInitialBuff();

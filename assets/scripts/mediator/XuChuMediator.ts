@@ -8,10 +8,13 @@ const { ccclass, property } = _decorator;
 
 @ccclass('XuChuMediator')
 export class XuChuMediator extends Mediator {
-    start() {
+    onLoad() {
+        this.actor = new Actor(LazyFishId.XuChu);
+    }
+
+    start(): void {
         this.stateMachine = this.getComponentInChildren(StateMachine);
         this.changeState(States.IDLE);
-        this.actor = new Actor(LazyFishId.XuChu);
         this.initRage();
         this.loadAudioRes();
         this.addInitialBuff();

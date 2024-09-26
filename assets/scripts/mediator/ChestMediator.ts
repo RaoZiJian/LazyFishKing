@@ -18,8 +18,11 @@ export class ChestMediator extends Mediator {
     private ANIMTION_OPEN = ["Open_0", "Open_1", "Open_2"]
     private ANIMTION_OPEN_IDLE = ["OpenWait_0", "OpenWait_1", "OpenWait_2"]
 
-    start() {
+    onLoad() {
         this.actor = new Actor(this.actorId);
+    }
+
+    start(): void {
         this.playIdle();
     }
 

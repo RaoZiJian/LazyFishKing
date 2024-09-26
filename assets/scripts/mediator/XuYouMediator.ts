@@ -8,10 +8,13 @@ const { ccclass, property } = _decorator;
 
 @ccclass('XuYouMediator')
 export class XuYouMediator extends ShootingMediator {
-    start() {
+    onLoad() {
+        this.actor = new Actor(LazyFishId.XuYou);
+    }
+
+    start(): void {
         this.stateMachine = this.getComponentInChildren(StateMachine);
         this.changeState(States.IDLE);
-        this.actor = new Actor(LazyFishId.XuYou);
         this.initRage();
         this.loadAudioRes();
         this.addInitialBuff();

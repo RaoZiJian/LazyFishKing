@@ -7,10 +7,13 @@ const { ccclass, property } = _decorator;
 
 @ccclass('CrabMediator')
 export class CrabMediator extends Mediator {
-    start() {
+    onLoad() {
+        this.actor = new Actor(LazyFishId.Crab);
+    }
+
+    start(): void {
         this.stateMachine = this.getComponentInChildren(StateMachine);
         this.changeState(States.IDLE);
-        this.actor = new Actor(LazyFishId.Crab);
         this.initRage();
         this.loadAudioRes();
         this.addInitialBuff();

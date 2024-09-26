@@ -2,46 +2,11 @@ import { _decorator, Component, Node } from 'cc';
 import { Actor } from './Actor/Actor';
 import { Utils } from './Utils';
 import { Item } from './Item';
+import { LazyFishId } from './Constants';
 const { ccclass, property } = _decorator;
 
 @ccclass('AccountInfo')
 export class AccountInfo {
-
-    private _name: string;
-    public get name(): string {
-        return this._name;
-    }
-    public set name(value: string) {
-        this._name = value;
-    }
-
-    private _avatarUrl: string = "fishes/Avatars/wolf";
-    public get avatarUrl(): string {
-        return this._avatarUrl;
-    }
-
-    public set avatarUrl(value: string) {
-        this._avatarUrl = value;
-    }
-
-    private _attack;
-    public get attack(): number {
-        return Utils.getFakeDataAttack(50, this.level)
-    }
-
-    private _level;
-    public get level() {
-        return Utils.getFakeDataLevel(this.allExp);
-    }
-
-    private _allExp: number;
-    public get allExp(): number {
-        return this._allExp;
-    }
-    public set allExp(value: number) {
-        this._allExp = value;
-    }
-
     private _actors: Actor[] = [];
     public get actors(): Actor[] {
         return this._actors;
@@ -66,9 +31,44 @@ export class AccountInfo {
         if (!this.instance) {
             this.instance = new AccountInfo();
             Utils.getFakeDataBagItmes();
+
+            let myActor = new Actor(LazyFishId.MyActor);
+            this.instance.actors.push(myActor);
         }
 
         return this.instance;
+    }
+
+    getMyActor(): Actor {
+        for (let i = 0; i < this.actors.length; i++) {
+            if (this.actors[i].id == LazyFishId.MyActor) {
+                return this.actors[i];
+            }
+        }
+    }
+
+    getMoney(): number {
+        return this.bag.get(13).amount;
+    }
+
+    costMoney(cost: number) {
+        this.bag.get(13).amount -= cost;
+    }
+
+    levelUp(actorId: number) {
+        for (let i = 0; i < this.actors.length; i++) {
+            if (actorId == this.actors[i].id) {
+                this.actors[i].level += 1;
+                this.actors[i].exp = 0;
+            }
+        }
+    }
+
+    addItem(itemId: number, amount: number) {
+        let item = this.bag.get(itemId);
+        if (item) {
+            item.amount += amount;
+        }
     }
 }
 

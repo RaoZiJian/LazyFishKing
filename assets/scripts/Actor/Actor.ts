@@ -1,4 +1,5 @@
 import GameTsCfg from "../data/client/GameTsCfg";
+import { Utils } from "../Utils";
 
 export const AttackType = {
     MeleeAttack: 1,
@@ -23,7 +24,6 @@ export class Actor {
         const cfg = GameTsCfg.Actor[this.id];
         if (cfg) {
             this.cfg = cfg;
-            this.attack = this.cfg?.attack as number;
             this.denfence = this.cfg?.defence as number;
             this.speed = this.cfg?.speed as number;
             this.hp = this.cfg?.hp as number;
@@ -62,7 +62,7 @@ export class Actor {
         this._id = value;
     }
 
-    private _level;
+    private _level = 1;
     /**
      * 等级
      */
@@ -73,6 +73,16 @@ export class Actor {
         this._level = value;
     }
 
+    /**
+     * 经验值：到下一级区间内的增长经验值
+     */
+    private _exp = 0;
+    public get exp() {
+        return this._exp;
+    }
+    public set exp(value) {
+        this._exp = value;
+    }
 
     private _hp;
     /**
@@ -101,12 +111,8 @@ export class Actor {
      * 攻击力
      */
     public get attack() {
-        return this._attack;
+        return Utils.getFakeDataAttack(this.cfg.attack, this.level);
     }
-    public set attack(value) {
-        this._attack = value;
-    }
-
 
     private _denfence;
     /**

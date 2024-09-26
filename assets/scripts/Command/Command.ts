@@ -12,6 +12,7 @@ import { Bullet } from "../Bullets/Bullet";
 import { ShootingMediator } from "../mediator/ShootingMediator";
 import { AttackType } from "../Actor/Actor";
 import { ChestMediator } from "../mediator/ChestMediator";
+import { AccountInfo } from "../AccountInfo";
 
 export abstract class Command {
 
@@ -232,9 +233,9 @@ export class HurtCommand extends Command {
         super();
         this.target = target;
         this.damage = damage;
-        if(target.actor.cfg.attackType == AttackType.Chest){
+        if (target.actor.cfg.attackType == AttackType.Chest) {
             this.duration = Constants.chestHurtDuration;
-        }else{
+        } else {
             this.duration = this.target.stateMachine.getAnimationDuration(States.HURT);
         }
     }
@@ -277,10 +278,10 @@ export class DeadCommand extends Command {
     constructor(target: Mediator) {
         super();
         this.target = target;
-        if(target.actor.cfg.attackType == AttackType.Chest){
+        if (target.actor.cfg.attackType == AttackType.Chest) {
             let mediator = this.target as ChestMediator;
-            this.duration = mediator.getDyingDuration();   
-        }else{
+            this.duration = mediator.getDyingDuration();
+        } else {
             this.duration = this.target.stateMachine.getAnimationDuration(States.DYING);
         }
     }
@@ -289,6 +290,13 @@ export class DeadCommand extends Command {
         if (this.target.isAlive) {
             this.target.changeState(States.DYING);
             const resPool = director.getScene().getChildByName("Canvas").getComponent(ResPool);
+            const battleField = director.getScene().getChildByName("Canvas").getComponentInChildren(BattleField);
+            let isActorFromLeft = battleField.isActorFromLeft(this.target);
+            if (!isActorFromLeft) {
+                let dropId = this.target.actor.cfg.drop;
+                let dropAmount = this.target.actor.cfg.dropAmount;
+                AccountInfo.getInstance().addItem(dropId, dropAmount);
+            }
             const damageNode = resPool.getDamageNode();
             if (damageNode) {
                 this.target.node.addChild(damageNode);

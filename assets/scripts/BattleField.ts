@@ -73,9 +73,8 @@ export class BattleField extends Component {
                     this.node.addChild(fishNode);
                     fishNode.setPosition(this.LeftFishAreas[i].position);
                     const mediator = fishNode.getComponent(Mediator);
-                    let actor = new Actor(id)
-                    AccountInfo.getInstance().actors.push(actor);
-                    
+                    AccountInfo.getInstance().actors.push(mediator.actor);
+
                     this.leftFishes.push(mediator);
                     this._prefabLoadingCount++;
                 }
@@ -124,9 +123,6 @@ export class BattleField extends Component {
     initAccountInfo() {
         //todo requst accountInfo
         let account = AccountInfo.getInstance();
-        account.name = "阿成";
-        account.allExp = 0;
-        account.avatarUrl
     }
 
     getNextActionActor(targets: Mediator[]) {

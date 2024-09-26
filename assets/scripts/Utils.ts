@@ -55,44 +55,42 @@ export class Utils {
         return result;
     }
 
-    static getFakeDataLevel(exp: number) {
-        return exp / Constants.levelUpExp + 1;
-    }
-
     static getFakeDataAttack(baseAttack: number, level: number): number {
-        return baseAttack + (level - 1) * Constants.levelUpExp;
-    }
-
-    static getExpRequire(level: number) {
-        return (level - 1) * Constants.levelUpExp;
-    }
-
-    /**
-     * 
-     * @param exp 总经验值
-     * @returns 目前等级下还剩余多少额外的经验值
-     */
-    static getCurrentLevelExp(exp: number) {
-        const requireExp = this.getExpRequire(this.getFakeDataLevel(exp))
-        return exp - requireExp;
-    }
-
-    /**
-     * 计算当前经验值升级到下一级要花费的钱
-     * @param allexp 当前总经验值
-     * @param level 目标等级
-     * @returns 当前经验值升级到下一级要花费的钱
-     */
-    static getFakeDataLevelUpCoinCost(allexp: number) {
-        return this.getCurrentLevelExp(allexp) * 10;
+        return baseAttack + (level - 1) * Constants.attackRaisePerLevel;
     }
 
     static getFakeDataBagItmes() {
         let itemsCfg = GameTsCfg.Item;
         for (let i = 0; i < Object.keys(itemsCfg).length; i++) {
             let itemCfg = itemsCfg[Object.keys(itemsCfg)[i]];
-            let item = new Item(itemCfg.id, itemCfg.name, itemCfg.des, itemCfg.spriteFrame, 100);
+            let amount = 999;
+            if (itemCfg.id == 13) {
+                amount = 1000;
+            }
+            let item = new Item(itemCfg.id, itemCfg.name, itemCfg.des, itemCfg.spriteFrame, amount);
             AccountInfo.getInstance().bag.set(item.id, item);
+        }
+    }
+
+    static getLevelUpCost(level: number, exp: number) {
+        let levelCfg = GameTsCfg.Level;
+        let nextLevel = level + 1;
+        if (levelCfg && levelCfg[level] && levelCfg[level + 1]) {
+            const currentLevelCfg = levelCfg[level];
+            const nextLevelCfg = levelCfg[level + 1];
+            const neededExp = (nextLevelCfg.exp - currentLevelCfg.exp) - exp;
+            return neededExp / (nextLevelCfg.exp - currentLevelCfg.exp) * nextLevelCfg.cost;
+        }
+    }
+
+    static getLevelUpPercent(level: number, exp: number) {
+        let levelCfg = GameTsCfg.Level;
+        let nextLevel = level + 1;
+        if (levelCfg && levelCfg[level] && levelCfg[level + 1]) {
+            const currentLevelCfg = levelCfg[level];
+            const nextLevelCfg = levelCfg[level + 1];
+            const neededExp = (nextLevelCfg.exp - currentLevelCfg.exp) - exp;
+            return 1 - neededExp / (nextLevelCfg.exp - currentLevelCfg.exp)
         }
     }
 }

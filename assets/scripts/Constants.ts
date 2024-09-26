@@ -11,7 +11,8 @@ export enum LazyFishId {
     XuChu = 10,
     ChestSmall = 11,
     ChestMiddle = 12,
-    ChestLarge = 13
+    ChestLarge = 13,
+    MyActor = 14,
 }
 
 export const Constants = {
@@ -21,10 +22,9 @@ export const Constants = {
     rageAdd: 50,
     maxRage: 100,
     clickBulletFlyTime: 0.3,
-    clickBulletDamage: 20,
     bladeWindFlyDuration: 0.3,
     chestHurtDuration: 0.5,
-    levelUpExp: 20,
+    attackRaisePerLevel: 20,
 }
 
 export const RES_URL = {
@@ -41,6 +41,6 @@ export const RES_URL = {
     popUpPrefab: "popup/PopupNode",
     roleScollViewPrefab: "popup/RoleScrollView",
     roleItem: "popup/RoleItem",
-    bagScrollViewPrefab:"popup/bagScrollView",
-    bagItem:"popup/ItemNode"
+    bagScrollViewPrefab: "popup/bagScrollView",
+    bagItem: "popup/ItemNode"
 }

@@ -16,14 +16,10 @@ export class RoleScrollView extends Component {
 
     start() {
         let account = AccountInfo.getInstance();
-        const actorAmount = 1 + account.actors.length;
+        const actorAmount = account.actors.length;
         for (let i = 0; i < actorAmount; i++) {
-            if (i == 0) {
-                this.createRoleItem(account.name, account.allExp, account.baseAttack, account.avatarUrl, this._getAvatarBgByIndex());
-            } else {
-                let actor = account.actors[i - 1];
-                this.createRoleItem(actor.cfg.name, 0, actor.cfg.attack, actor.cfg.avatar, this._getAvatarBgByIndex());
-            }
+            let actor = account.actors[i];
+            this.createRoleItem(actor, this._getAvatarBgByIndex());
         }
     }
 
@@ -46,29 +42,12 @@ export class RoleScrollView extends Component {
         }
     }
 
-    createRoleItem(name: string, exp: number, baseAttack: number, avtarUrl: string, avatarBg: string) {
+    createRoleItem(actor: Actor, avatarBg: string) {
         resources.load(RES_URL.roleItem, Prefab, (error, prefab) => {
             if (prefab) {
                 let roleItemNode = instantiate(prefab);
                 let roleItem = roleItemNode.getComponent(RoleItem);
-                resources.load(avtarUrl + "/spriteFrame", SpriteFrame, (error, spriteframe) => {
-                    if (spriteframe) {
-                        roleItem.avatar.spriteFrame = spriteframe;
-                    }
-                })
-
-                resources.load(avatarBg + "/spriteFrame", SpriteFrame, (error, spriteframe) => {
-                    roleItem.avatarBg.spriteFrame = spriteframe;
-                })
-
-                roleItem.roleName.string = name;
-                roleItem.roleLevel.string = "Lv." + Utils.getFakeDataLevel(exp).toString();
-                roleItem.roleAttack.string = "攻击力:" + Utils.getFakeDataAttack(baseAttack, Utils.getFakeDataLevel(exp)).toString();
-                const currentExp = Utils.getCurrentLevelExp(exp);
-                const percent = currentExp / Constants.levelUpExp;
-                roleItem.percent.string = (currentExp / Constants.levelUpExp).toString() + "%";
-                roleItem.progress.progress = percent;
-
+                roleItem.initItem(actor, avatarBg);
                 this.content.addChild(roleItemNode);
             }
         })
