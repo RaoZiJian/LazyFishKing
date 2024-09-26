@@ -40,5 +40,7 @@ export const RES_URL = {
     bladeWind2: "fishes/XuChu/SkillEffect/bladeEffect2",
     popUpPrefab: "popup/PopupNode",
     roleScollViewPrefab: "popup/RoleScrollView",
-    roleItem: "popup/RoleItem"
+    roleItem: "popup/RoleItem",
+    bagScrollViewPrefab:"popup/bagScrollView",
+    bagItem:"popup/ItemNode"
 }

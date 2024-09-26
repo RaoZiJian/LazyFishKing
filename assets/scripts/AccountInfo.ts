@@ -1,6 +1,7 @@
 import { _decorator, Component, Node } from 'cc';
 import { Actor } from './Actor/Actor';
 import { Utils } from './Utils';
+import { Item } from './Item';
 const { ccclass, property } = _decorator;
 
 @ccclass('AccountInfo')
@@ -54,11 +55,17 @@ export class AccountInfo {
         return this._baseAttack;
     }
 
+    private _bag: Map<number, Item> = new Map<number, Item>();
+    public get bag(): Map<number, Item> {
+        return this._bag;
+    }
+
     private static instance: AccountInfo = undefined;
 
     static getInstance() {
         if (!this.instance) {
             this.instance = new AccountInfo();
+            Utils.getFakeDataBagItmes();
         }
 
         return this.instance;

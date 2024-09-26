@@ -77,6 +77,13 @@ export class BottomMenu extends Component {
     addBagPopUp() {
         if (this.popUp) {
             this.popUp.title.string = "背包";
+            resources.load(RES_URL.bagScrollViewPrefab, Prefab, (error, prefab)=>{
+                if(prefab){
+                    let bagScrollViewNode = instantiate(prefab);
+                    this.popUp.node.addChild(bagScrollViewNode);
+                    bagScrollViewNode.setSiblingIndex(3);
+                }
+            })
         }
     }
 

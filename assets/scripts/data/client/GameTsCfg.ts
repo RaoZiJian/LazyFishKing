@@ -262,6 +262,98 @@ export default {
       "propertyValue": 30
     }
   },
+  "Item": {
+    "1": {
+      "id": 1,
+      "name": "10钻石礼包",
+      "spriteFrame": "item/1",
+      "des": "10钻石礼包"
+    },
+    "2": {
+      "id": 2,
+      "name": "100钻石礼包",
+      "spriteFrame": "item/2",
+      "des": "100钻石礼包"
+    },
+    "3": {
+      "id": 3,
+      "name": "200钻石礼包",
+      "spriteFrame": "item/3",
+      "des": "200钻石礼包"
+    },
+    "4": {
+      "id": 4,
+      "name": "小包子",
+      "spriteFrame": "item/4",
+      "des": "回复10能量"
+    },
+    "5": {
+      "id": 5,
+      "name": "大包子",
+      "spriteFrame": "item/5",
+      "des": "回复50能量"
+    },
+    "6": {
+      "id": 6,
+      "name": "月卡",
+      "spriteFrame": "item/6",
+      "des": "月卡哦"
+    },
+    "7": {
+      "id": 7,
+      "name": "季卡",
+      "spriteFrame": "item/7",
+      "des": "季卡哦"
+    },
+    "8": {
+      "id": 8,
+      "name": "导航仪",
+      "spriteFrame": "item/8",
+      "des": "升级素材哦"
+    },
+    "9": {
+      "id": 9,
+      "name": "金色宝箱钥匙",
+      "spriteFrame": "item/9",
+      "des": "打开金色宝箱用的呢"
+    },
+    "10": {
+      "id": 10,
+      "name": "水枪",
+      "spriteFrame": "item/10",
+      "des": "升级素材哦"
+    },
+    "11": {
+      "id": 11,
+      "name": "礼物",
+      "spriteFrame": "item/11",
+      "des": "来自工会的礼物"
+    },
+    "12": {
+      "id": 12,
+      "name": "能量电池",
+      "spriteFrame": "item/12",
+      "des": "回复100能量"
+    },
+    "13": {
+      "id": 13,
+      "name": "金币",
+      "spriteFrame": "item/13",
+      "des": "小钱钱~"
+    },
+    "14": {
+      "id": 14,
+      "name": "太阳徽章",
+      "spriteFrame": "item/14",
+      "des": "升级素材哦~"
+    },
+    "15": {
+      "id": 15,
+      "name": "剑石",
+      "spriteFrame": "item/15",
+      "des": "升级素材哦~"
+    }
+  },
   "MainSkill": {
     "1": {
       "id": 1,

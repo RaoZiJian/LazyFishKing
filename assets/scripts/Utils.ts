@@ -1,4 +1,7 @@
+import { AccountInfo } from "./AccountInfo";
 import { Constants } from "./Constants";
+import GameTsCfg from "./data/client/GameTsCfg";
+import { Item } from "./Item";
 import { Mediator } from "./mediator/Mediator";
 
 export class Utils {
@@ -82,6 +85,15 @@ export class Utils {
      */
     static getFakeDataLevelUpCoinCost(allexp: number) {
         return this.getCurrentLevelExp(allexp) * 10;
+    }
+
+    static getFakeDataBagItmes() {
+        let itemsCfg = GameTsCfg.Item;
+        for (let i = 0; i < Object.keys(itemsCfg).length; i++) {
+            let itemCfg = itemsCfg[Object.keys(itemsCfg)[i]];
+            let item = new Item(itemCfg.id, itemCfg.name, itemCfg.des, itemCfg.spriteFrame, 100);
+            AccountInfo.getInstance().bag.set(item.id, item);
+        }
     }
 }
 
