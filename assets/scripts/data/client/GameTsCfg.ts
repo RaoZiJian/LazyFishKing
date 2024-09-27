@@ -946,11 +946,11 @@ export default {
   "Stage": {
     "1": {
       "id": 1,
-      "fisheActors": "1,1,1,1"
+      "fisheActors": "1,1,1"
     },
     "2": {
       "id": 2,
-      "fisheActors": "2,2,2,2,2"
+      "fisheActors": "2,2,2,2"
     },
     "3": {
       "id": 3,
@@ -958,6 +958,26 @@ export default {
     },
     "4": {
       "id": 4,
+      "fisheActors": "3,4,5"
+    },
+    "5": {
+      "id": 5,
+      "fisheActors": "6,7,8"
+    },
+    "6": {
+      "id": 6,
+      "fisheActors": "7,8,9"
+    },
+    "7": {
+      "id": 7,
+      "fisheActors": "10,10,10"
+    },
+    "8": {
+      "id": 8,
+      "fisheActors": "8,9,10,7,5"
+    },
+    "9": {
+      "id": 9,
       "fisheActors": "11,12,13"
     }
   }

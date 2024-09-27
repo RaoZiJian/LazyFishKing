@@ -22,7 +22,7 @@ export const Constants = {
     rageAdd: 50,
     maxRage: 100,
     clickBulletFlyTime: 0.3,
-    bladeWindFlyDuration: 0.3,
+    bladeWindFlyDuration: 1,
     chestHurtDuration: 0.5,
     attackRaisePerLevel: 20,
 }

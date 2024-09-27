@@ -358,7 +358,7 @@
       "__expectedType__": "cc.AudioClip"
     },
     "_loop": true,
-    "_playOnAwake": false,
+    "_playOnAwake": true,
     "_volume": 1,
     "_id": "6cG0hZTKtOi4vO/gdw5R2b"
   },
@@ -1621,7 +1621,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 0,
-      "y": 378.023,
+      "y": 414.023,
       "z": 0
     },
     "_lrot": {
@@ -1708,7 +1708,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 0,
-      "y": -591.169,
+      "y": -467.741,
       "z": 0
     },
     "_lrot": {

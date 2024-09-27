@@ -459,19 +459,22 @@ export class BladeWindSkill extends MainSkill {
                         const bladeWind = this.resPool.getBladeWindNode(i);
                         this.canvas.getChildByName("EffectLayer").addChild(bladeWind);
                         bladeWind.worldPosition = this.caster.model.worldPosition;
+                        const bladeBullet = bladeWind.getComponent(Bullet);
+                        bladeBullet.bullet.getComponent(Animation).play();
+                        if (this.caster.isReverse == -1) {
+                            bladeBullet.bullet.scale = new Vec3(bladeBullet.bullet.scale.x * -1, bladeBullet.bullet.scale.y, bladeBullet.bullet.scale.z);
+                        }
                         tween(bladeWind)
-                            .to(Constants.bladeWindFlyDuration, { worldPosition: target.model.worldPosition })
+                            .to(this.bladeWindDuration, { worldPosition: target.model.worldPosition })
                             .call(() => {
-                                const bladeBullet = bladeWind.getComponent(Bullet);
-                                bladeBullet.bullet.getComponent(Animation).play();
                                 let damage = this.getDamage(this.caster, target);
                                 damage = damage > 0 ? damage : 1;
                                 const isDead = (target.actor.hp - damage) <= 0;
                                 bladeBullet.scheduleOnce(() => {
+                                    bladeBullet.bullet.scale = new Vec3(0.5, 0.5, 0.5);
                                     bladeWind.removeFromParent();
                                     this.resPool.putNode(bladeWind);
                                 }, this.bladeWindDuration)
-
                                 if (!isDead) {
                                     const hurtCommand = new HurtCommand(target, damage);
                                     hurtCommand.execute();

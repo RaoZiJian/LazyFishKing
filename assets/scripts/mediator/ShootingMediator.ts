@@ -1,4 +1,4 @@
-import { _decorator, Component, instantiate, Node, UIOpacity } from 'cc';
+import { _decorator, Component, instantiate, Node, UIOpacity, Vec3 } from 'cc';
 import { Mediator } from './Mediator';
 const { ccclass, property } = _decorator;
 

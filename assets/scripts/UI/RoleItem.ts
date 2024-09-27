@@ -88,6 +88,7 @@ export class RoleItem extends Component {
 
         let cost = Utils.getLevelUpCost(this.actor.level, this.actor.exp);
         let isLevelUpMoneyEnough = AccountInfo.getInstance().getMoney() - cost > 0;
+        this.coins.string = cost.toString();
         this.coins.color = isLevelUpMoneyEnough ? Color.GREEN : Color.RED;
 
         this.roleName.string = this.actor.cfg.name;
