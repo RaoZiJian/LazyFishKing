@@ -6,7 +6,6 @@ import { Mediator } from './mediator/Mediator';
 import { Actor, AttackType } from './Actor/Actor';
 import { AttackCommand, BulletFireCommnad, Command, EndTurnCoomand, MainSkillCastCommand, MoveCommand, ShootingCommand } from './Command/Command';
 import { ShootingMediator } from './mediator/ShootingMediator';
-import { BuffNode } from './BuffNode';
 import { FireAreaFiled } from './FireAreaFiled';
 import { AccountInfo } from './AccountInfo';
 const { ccclass, property } = _decorator;
@@ -56,32 +55,32 @@ export class BattleField extends Component {
         this._currentStage = value;
     }
 
-    private _allPrefabCount: number = 1;
-    private _prefabLoadingCount: number = 0;
+    private _allPrefabCount: number = 0;
+    private _prefabLoadedCount: number = 0;
     private _isBattleBegin: boolean = false;
 
     fetchMyFishes() {
         //htttp request get my fishes
-        const myFishes = [9, 10, 3, 4, 8]
-        for (let i = 0; i < myFishes.length; i++) {
-            const id = myFishes[i];
-            const fishURL = GameTsCfg.Actor[id].prefab;
-
-            resources.load(fishURL, Prefab, (error, prefab) => {
-                if (prefab) {
-                    let fishNode = instantiate(prefab);
-                    this.node.addChild(fishNode);
-                    fishNode.setPosition(this.LeftFishAreas[i].position);
-                    const mediator = fishNode.getComponent(Mediator);
-                    AccountInfo.getInstance().actors.push(mediator.actor);
-
-                    this.leftFishes.push(mediator);
-                    this._prefabLoadingCount++;
-                }
-            })
+        const account = AccountInfo.getInstance();
+        for (let i = 0; i < account.actors.length; i++) {
+            const actor = account.actors[i];
+            if (actor.id != LazyFishId.MyActor) {
+                const fishURL = GameTsCfg.Actor[actor.id].prefab;
+                resources.load(fishURL, Prefab, (error, prefab) => {
+                    if (prefab) {
+                        let fishNode = instantiate(prefab);
+                        this.node.addChild(fishNode);
+                        fishNode.setPosition(this.LeftFishAreas[i].position);
+                        const mediator = fishNode.getComponent(Mediator);
+                        mediator.loadingActor(actor);
+                        this.leftFishes.push(mediator);
+                        this._prefabLoadedCount++;
+                    }
+                })
+            }
         }
 
-        this._allPrefabCount = myFishes.length;
+        this._allPrefabCount += account.actors.length;
     }
 
     initEnemyFishes() {
@@ -92,7 +91,8 @@ export class BattleField extends Component {
             const fisheIds = Utils.parseString(stage.fisheActors);
 
             for (let i = 0; i < fisheIds.length; i++) {
-                const id = fisheIds[i];
+                const id = fisheIds[i] as number;
+                const actor = new Actor(id);
                 const fishURL = GameTsCfg.Actor[id].prefab
                 resources.load(fishURL, Prefab, (error, prefab) => {
                     if (prefab) {
@@ -100,9 +100,10 @@ export class BattleField extends Component {
                         this.node.addChild(fishNode);
                         fishNode.setPosition(this.RightFishAreas[i].position);
                         const mediator = fishNode.getComponent(Mediator);
+                        mediator.loadingActor(actor);
                         this.rightFishes.push(mediator);
                         mediator.isReverse = -1;
-                        this._prefabLoadingCount++;
+                        this._prefabLoadedCount++;
                     }
                 })
             }
@@ -113,7 +114,6 @@ export class BattleField extends Component {
     start() {
         profiler.hideStats();
         this.Loading.getComponent(UIOpacity).opacity = 255;
-        this.fetchMyFishes();
         this.initAccountInfo();
         this.initEnemyFishes()
         this.stageLabel.getComponent(UIOpacity).opacity = 0;
@@ -122,12 +122,17 @@ export class BattleField extends Component {
 
     initAccountInfo() {
         //todo requst accountInfo
-        let account = AccountInfo.getInstance();
+        AccountInfo.getInstance().requestAccountInfo(() => {
+            this.fetchMyFishes();
+        });
     }
 
     getNextActionActor(targets: Mediator[]) {
         let aliveActors = Utils.getAliveActors(targets);
         const sortedActors = aliveActors.sort((a, b) => {
+            if(a.actor==undefined){
+                console.log('pause');
+            }
             return b.actor.speed - a.actor.speed;
         })
 
@@ -276,15 +281,15 @@ export class BattleField extends Component {
         this.leftFishes = Utils.getAliveActors(this.leftFishes);
 
         this.rightFishes = [];
-        this._prefabLoadingCount = 5;
-        this._allPrefabCount = 5;
+        this._prefabLoadedCount = 0;
+        this._allPrefabCount = 0;
         this._isBattleBegin = false;
         this.initEnemyFishes();
         this.fireAreaField.closeFire();
     }
 
     update(deltaTime: number) {
-        if (this._allPrefabCount == this._prefabLoadingCount && (this._isBattleBegin == false)) {
+        if (this._allPrefabCount == this._prefabLoadedCount && (this._isBattleBegin == false)) {
             this._isBattleBegin = true;
             this.Loading.getComponent(UIOpacity).opacity = 0;
             this.stageLabel.getComponent(UIOpacity).opacity = 255;
@@ -293,5 +298,3 @@ export class BattleField extends Component {
         }
     }
 }
-
-

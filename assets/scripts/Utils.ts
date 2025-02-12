@@ -83,6 +83,17 @@ export class Utils {
         }
     }
 
+    static getAccountLevelUpCost(level: number, exp: number) {
+        let playerLevelCfg = GameTsCfg.PlayerLevel;
+        let nextLevel = level + 1;
+        if (playerLevelCfg && playerLevelCfg[level] && playerLevelCfg[level + 1]) {
+            const currentLevelCfg = playerLevelCfg[level];
+            const nextLevelCfg = playerLevelCfg[level + 1];
+            const neededExp = (nextLevelCfg.exp - currentLevelCfg.exp) - exp;
+            return neededExp / (nextLevelCfg.exp - currentLevelCfg.exp) * nextLevelCfg.cost;
+        }
+    }
+
     static getLevelUpPercent(level: number, exp: number) {
         let levelCfg = GameTsCfg.Level;
         let nextLevel = level + 1;

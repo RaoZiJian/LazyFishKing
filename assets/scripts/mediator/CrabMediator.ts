@@ -8,15 +8,15 @@ const { ccclass, property } = _decorator;
 @ccclass('CrabMediator')
 export class CrabMediator extends Mediator {
     onLoad() {
-        this.actor = new Actor(LazyFishId.Crab);
+        // this.actor = new Actor(LazyFishId.Crab);
     }
 
     start(): void {
-        this.stateMachine = this.getComponentInChildren(StateMachine);
-        this.changeState(States.IDLE);
-        this.initRage();
-        this.loadAudioRes();
-        this.addInitialBuff();
+        // this.stateMachine = this.getComponentInChildren(StateMachine);
+        // this.changeState(States.IDLE);
+        // this.initRage();
+        // this.loadAudioRes();
+        // this.addInitialBuff();
     }
 
     update(deltaTime: number) {

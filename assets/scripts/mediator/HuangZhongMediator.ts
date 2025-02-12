@@ -9,15 +9,15 @@ const { ccclass } = _decorator;
 export class HuangZhongMediator extends ShootingMediator {
 
     onLoad() {
-        this.actor = new Actor(LazyFishId.HuangZhong);
+        // this.actor = new Actor(LazyFishId.HuangZhong);
     }
 
     start(): void {
-        this.stateMachine = this.getComponentInChildren(StateMachine);
-        this.changeState(States.IDLE);
-        this.initRage();
-        this.loadAudioRes();
-        this.addInitialBuff();
+        // this.stateMachine = this.getComponentInChildren(StateMachine);
+        // this.changeState(States.IDLE);
+        // this.initRage();
+        // this.loadAudioRes();
+        // this.addInitialBuff();
     }
 
     update(deltaTime: number) {

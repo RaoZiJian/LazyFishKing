@@ -1,20 +1,16 @@
 import { _decorator, Button, Color, Component, Label, Node, ProgressBar, resources, Sprite, SpriteFrame } from 'cc';
+import { AccountInfo } from '../AccountInfo';
 import { Actor } from '../Actor/Actor';
 import { Utils } from '../Utils';
-import { AccountInfo } from '../AccountInfo';
 const { ccclass, property } = _decorator;
 
-@ccclass('RoleItem')
-export class RoleItem extends Component {
-
+@ccclass('AccountRoleItem')
+export class AccountRoleItem extends Component {
     @property(Sprite)
     avatarBg: Sprite
 
     @property(Sprite)
     avatar: Sprite
-
-    @property(Sprite)
-    progressBar: Sprite
 
     @property(Label)
     roleName: Label
@@ -37,14 +33,6 @@ export class RoleItem extends Component {
     @property(Node)
     buyBtn: Node;
 
-    private _actor: Actor;
-    public get actor(): Actor {
-        return this._actor;
-    }
-    public set actor(value: Actor) {
-        this._actor = value;
-    }
-
     private _avatarBgUrl: string;
     public get avatarBgUrl(): string {
         return this._avatarBgUrl;
@@ -55,26 +43,26 @@ export class RoleItem extends Component {
 
     start() {
         this.buyBtn.on(Button.EventType.CLICK, () => {
-            let cost = Utils.getLevelUpCost(this.actor.level, this.actor.exp);
-            let account = AccountInfo.getInstance();
-            let isLevelUpMoneyEnough = account.getMoney() - cost > 0;
+            const account = AccountInfo.getInstance();
+            let cost = Utils.getAccountLevelUpCost(account.level, account.exp);
+            let isLevelUpMoneyEnough = AccountInfo.getInstance().getMoney() - cost > 0;
             if (isLevelUpMoneyEnough) {
-                account.actorLevelUp(this.actor.id, () => {
+                account.acountLevelUp(()=>{
                     this.refreshItem();
-                })
+                });
             }
         })
     }
 
-    initItem(actor: Actor, avatarBgUrl: string) {
-        this.actor = actor;
+    initItem(avatarBgUrl: string) {
         this.avatarBgUrl = avatarBgUrl;
-
         this.refreshItem();
     }
 
     refreshItem() {
-        resources.load(this.actor.cfg.avatar + "/spriteFrame", SpriteFrame, (error, spriteframe) => {
+        const account = AccountInfo.getInstance();
+
+        resources.load(account.avatar + "/spriteFrame", SpriteFrame, (error, spriteframe) => {
             if (spriteframe) {
                 this.avatar.spriteFrame = spriteframe;
             }
@@ -84,15 +72,15 @@ export class RoleItem extends Component {
             this.avatarBg.spriteFrame = spriteframe;
         })
 
-        let cost = Utils.getLevelUpCost(this.actor.level, this.actor.exp);
+        let cost = Utils.getLevelUpCost(account.level, account.exp);
         let isLevelUpMoneyEnough = AccountInfo.getInstance().getMoney() - cost > 0;
         this.coins.string = cost.toString();
         this.coins.color = isLevelUpMoneyEnough ? Color.GREEN : Color.RED;
 
-        this.roleName.string = this.actor.cfg.name;
-        this.roleLevel.string = "Lv." + this.actor.level.toString();
-        this.roleAttack.string = "攻击力:" + this.actor.attack;
-        const percent = Utils.getLevelUpPercent(this.actor.level, this.actor.exp)
+        this.roleName.string = account.name;
+        this.roleLevel.string = "Lv." + account.level.toString();
+        this.roleAttack.string = "攻击力:" + account.attack;
+        const percent = Utils.getLevelUpPercent(account.level, account.exp)
         this.percent.string = percent.toString() + "%";
         this.progress.progress = percent;
     }
@@ -101,5 +89,3 @@ export class RoleItem extends Component {
 
     }
 }
-
-

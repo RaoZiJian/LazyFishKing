@@ -41,6 +41,18 @@ export const RES_URL = {
     popUpPrefab: "popup/PopupNode",
     roleScollViewPrefab: "popup/RoleScrollView",
     roleItem: "popup/RoleItem",
+    accountRoleItem:"popup/AccountRoleItem",
     bagScrollViewPrefab: "popup/bagScrollView",
     bagItem: "popup/ItemNode"
 }
+
+export const POST_URL = {
+    account : "account",
+    bag:"bag",
+    actors:"actors",
+    battles:"battles",
+    levelup:"levelup",
+    getItem:"getItem"
+}
+
+export const TestAccountId = "c1a3ad9c-f4c4-43ab-abba-9f3dd17cc4de"

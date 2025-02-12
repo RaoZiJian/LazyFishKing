@@ -174,6 +174,19 @@ export class Mediator extends Component {
 
     }
 
+    loadingActor(actor: Actor) {
+        if(actor && actor.id && actor.cfg){
+            this.actor = actor;
+            this.stateMachine = this.getComponentInChildren(StateMachine);
+            this.changeState(States.IDLE);
+            this.initRage();
+            this.loadAudioRes();
+            this.addInitialBuff();
+        }else{
+            log("actor is wrong");
+        }
+    }
+
     changeState(newState: string) {
         this.stateMachine.changeState(newState);
         if (newState == States.HURT) {

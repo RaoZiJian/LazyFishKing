@@ -1,4 +1,4 @@
-import { _decorator, Component, Enum, Node, Skeleton, sp } from 'cc';
+import { _decorator, Component, Enum, log, Node, Skeleton, sp } from 'cc';
 import { Mediator } from './Mediator';
 import { Constants, LazyFishId } from '../Constants';
 import { States } from '../stateMachine/StateMachine';
@@ -19,11 +19,20 @@ export class ChestMediator extends Mediator {
     private ANIMTION_OPEN_IDLE = ["OpenWait_0", "OpenWait_1", "OpenWait_2"]
 
     onLoad() {
-        this.actor = new Actor(this.actorId);
+        // this.actor = new Actor(this.actorId);
     }
 
     start(): void {
-        this.playIdle();
+        
+    }
+
+    loadingActor(actor: Actor): void {
+        if(actor && actor.id && actor.cfg){
+            this.actor = actor;
+            this.playIdle();
+        }else{
+            log("actor is wrong");
+        }
     }
 
     changeState(newState: string) {

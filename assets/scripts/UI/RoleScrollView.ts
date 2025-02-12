@@ -4,6 +4,7 @@ import { Constants, RES_URL } from '../Constants';
 import { RoleItem } from './RoleItem';
 import { Actor } from '../Actor/Actor';
 import { Utils } from '../Utils';
+import { AccountRoleItem } from './AccountRoleItem';
 const { ccclass, property } = _decorator;
 
 @ccclass('RoleScrollView')
@@ -17,6 +18,7 @@ export class RoleScrollView extends Component {
     start() {
         let account = AccountInfo.getInstance();
         const actorAmount = account.actors.length;
+        this.creatAccountRoleItem();
         for (let i = 0; i < actorAmount; i++) {
             let actor = account.actors[i];
             this.createRoleItem(actor, this._getAvatarBgByIndex());
@@ -40,6 +42,17 @@ export class RoleScrollView extends Component {
             default:
                 break;
         }
+    }
+
+    creatAccountRoleItem() {
+        resources.load(RES_URL.accountRoleItem, Prefab, (error, prefab) => {
+            if (prefab) {
+                let accountRoleItemNode = instantiate(prefab);
+                let accountRoleItem = accountRoleItemNode.getComponent(AccountRoleItem);
+                accountRoleItem.initItem(this._getAvatarBgByIndex());
+                this.content.addChild(accountRoleItemNode);
+            }
+        })
     }
 
     createRoleItem(actor: Actor, avatarBg: string) {

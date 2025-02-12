@@ -295,7 +295,7 @@ export class DeadCommand extends Command {
             if (!isActorFromLeft) {
                 let dropId = this.target.actor.cfg.drop;
                 let dropAmount = this.target.actor.cfg.dropAmount;
-                AccountInfo.getInstance().addItem(dropId, dropAmount);
+                AccountInfo.getInstance().requestAddItem(dropId, dropAmount, () => { });
             }
             const damageNode = resPool.getDamageNode();
             if (damageNode) {

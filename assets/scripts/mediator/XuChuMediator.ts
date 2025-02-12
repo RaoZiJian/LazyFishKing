@@ -9,18 +9,17 @@ const { ccclass, property } = _decorator;
 @ccclass('XuChuMediator')
 export class XuChuMediator extends Mediator {
     onLoad() {
-        this.actor = new Actor(LazyFishId.XuChu);
+        // this.actor = new Actor(LazyFishId.XuChu);
+    }
+
+    loadingActor(actor: Actor) {
+        super.loadingActor(actor);
+        const resPool = director.getScene().getChildByName("Canvas").getComponent(ResPool);
+        resPool.loadBladeWindSkill();
     }
 
     start(): void {
-        this.stateMachine = this.getComponentInChildren(StateMachine);
-        this.changeState(States.IDLE);
-        this.initRage();
-        this.loadAudioRes();
-        this.addInitialBuff();
 
-        const resPool = director.getScene().getChildByName("Canvas").getComponent(ResPool);
-        resPool.loadBladeWindSkill();
     }
 
     update(deltaTime: number) {

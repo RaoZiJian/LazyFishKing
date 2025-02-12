@@ -8,15 +8,15 @@ const { ccclass, property } = _decorator;
 @ccclass('LvMengMediator')
 export class LvMengMediator extends Mediator {
     onLoad() {
-        this.actor = new Actor(LazyFishId.LvMeng);
+        // this.actor = new Actor(LazyFishId.LvMeng);
     }
 
     start(): void {
-        this.stateMachine = this.getComponentInChildren(StateMachine);
-        this.changeState(States.IDLE);
-        this.initRage();
-        this.loadAudioRes();
-        this.addInitialBuff();
+        // this.stateMachine = this.getComponentInChildren(StateMachine);
+        // this.changeState(States.IDLE);
+        // this.initRage();
+        // this.loadAudioRes();
+        // this.addInitialBuff();
     }
 
     update(deltaTime: number) {
