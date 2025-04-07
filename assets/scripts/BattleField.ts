@@ -1,6 +1,6 @@
-import { _decorator, Component, director, instantiate, Label, log, Node, Prefab, profiler, resources, UIOpacity, Vec3 } from 'cc';
+import { _decorator, Component, Label, Node, profiler, UIOpacity, Vec3 } from 'cc';
 import GameTsCfg from './data/client/GameTsCfg';
-import { Constants, LazyFishId, RES_URL } from './Constants';
+import { Constants, LazyFishId } from './Constants';
 import { Utils } from './Utils';
 import { Mediator } from './mediator/Mediator';
 import { Actor, AttackType } from './Actor/Actor';
@@ -8,27 +8,34 @@ import { AttackCommand, BulletFireCommnad, Command, EndTurnCoomand, MainSkillCas
 import { ShootingMediator } from './mediator/ShootingMediator';
 import { FireAreaFiled } from './FireAreaFiled';
 import { AccountInfo } from './AccountInfo';
+import { FishNodePool } from './FishNodePool';
 const { ccclass, property } = _decorator;
 
 @ccclass('BattleField')
 export class BattleField extends Component {
 
-    @property(Node)
+    @property({ type: Node, tooltip: "左边武将区域" })
     LeftFishAreas: Node[] = [];
 
-    @property(Node)
+    @property({ type: Node, tooltip: "右边武将区域" })
     RightFishAreas: Node[] = [];
 
-    @property(Node)
-    Loading: Node;
-
-    @property(FireAreaFiled)
+    @property({ type: FireAreaFiled, tooltip: "触摸发射子弹区域" })
     fireAreaField: FireAreaFiled;
 
-    @property(Label)
+    @property({ type: Label, tooltip: "当前关卡" })
     stageLabel: Label;
 
+    @property({ type: UIOpacity, tooltip: "Loading节点" })
+    loadingOpacity: UIOpacity;
+
     private _leftFishes: Mediator[] = [];
+    private _currentStage = 1;
+    private _rightFishes: Mediator[] = [];
+
+    /**
+     * 左边武将, 玩家的武将
+     */
     public get leftFishes(): Mediator[] {
         return this._leftFishes;
     }
@@ -36,7 +43,9 @@ export class BattleField extends Component {
         this._leftFishes = value;
     }
 
-    private _rightFishes: Mediator[] = [];
+    /**
+     * 右边武将，敌人的武将
+     */
     public get rightFishes(): Mediator[] {
         return this._rightFishes;
     }
@@ -44,7 +53,6 @@ export class BattleField extends Component {
         this._rightFishes = value;
     }
 
-    private _currentStage = 1;
     /**
      * 当前关卡
      */
@@ -55,35 +63,63 @@ export class BattleField extends Component {
         this._currentStage = value;
     }
 
-    private _allPrefabCount: number = 0;
-    private _prefabLoadedCount: number = 0;
-    private _isBattleBegin: boolean = false;
+    /**
+     * 异步启动游戏
+     * 本函数负责按顺序初始化游戏的各种状态和资源，并开始战斗循环
+     */
+    async start() {
+        // 显示加载中的状态
+        this.showLoading(true);
+        // 请求账户信息，可能包括玩家数据和游戏设置等
+        await AccountInfo.requestAccountInfo();
+        // 预加载游戏资源，如模型和纹理等
+        await this.preloadPrefabs();
+        // 初始化玩家的鱼
+        await this.initMyFishes();
+        // 初始化敌方的鱼
+        await this.initEnemyFishes()
+        // 隐藏加载中的状态
+        this.showLoading(false);
 
-    fetchMyFishes() {
-        //htttp request get my fishes
-        const account = AccountInfo.getInstance();
-        for (let i = 0; i < account.actors.length; i++) {
-            const actor = account.actors[i];
-            if (actor.id != LazyFishId.MyActor) {
-                const fishURL = GameTsCfg.Actor[actor.id].prefab;
-                resources.load(fishURL, Prefab, (error, prefab) => {
-                    if (prefab) {
-                        let fishNode = instantiate(prefab);
-                        this.node.addChild(fishNode);
-                        fishNode.setPosition(this.LeftFishAreas[i].position);
-                        const mediator = fishNode.getComponent(Mediator);
-                        mediator.loadingActor(actor);
-                        this.leftFishes.push(mediator);
-                        this._prefabLoadedCount++;
-                    }
-                })
-            }
-        }
-
-        this._allPrefabCount += account.actors.length;
+        // 设置关卡标签的透明度为0，准备更新关卡信息
+        this.stageLabel.getComponent(UIOpacity).opacity = 0;
+        // 更新关卡标签的文本内容
+        this.stageLabel.string = "第" + this.currentStage + "关";
+        // 恢复关卡标签的透明度，使其可见
+        this.stageLabel.getComponent(UIOpacity).opacity = 255;
+        // 开始战斗循环，传入所有鱼的列表
+        await this.battleLoop(([...this.leftFishes, ...this.rightFishes]));
+        // 开启右方鱼的攻击模式
+        this.fireAreaField.openFire(this.rightFishes);
     }
 
-    initEnemyFishes() {
+    async preloadPrefabs() {
+        const actorLength = Object.keys(GameTsCfg.Actor).length;
+        for (let i = 0; i < actorLength; i++) {
+            let key = Object.keys(GameTsCfg.Actor)[i];
+            let prefab = GameTsCfg.Actor[key].prefab;
+            await FishNodePool.preloadSingle(prefab, 1);
+        }
+    }
+
+    async initMyFishes() {
+        for (let i = 0; i < AccountInfo.actors.length; i++) {
+            const actor = AccountInfo.actors[i];
+            if (actor.id != LazyFishId.MyActor) {
+                const fishURL = GameTsCfg.Actor[actor.id].prefab;
+                let fishNode = await FishNodePool.get(fishURL);
+                if (fishNode) {
+                    this.node.addChild(fishNode);
+                    fishNode.setPosition(this.LeftFishAreas[i].position);
+                    const mediator = fishNode.getComponent(Mediator);
+                    mediator.loadingActor(actor);
+                    this.leftFishes.push(mediator);
+                }
+            }
+        }
+    }
+
+    async initEnemyFishes() {
         // http request get currentStage
         const stages = GameTsCfg.Stage;
         if (stages[this.currentStage]) {
@@ -94,43 +130,23 @@ export class BattleField extends Component {
                 const id = fisheIds[i] as number;
                 const actor = new Actor(id);
                 const fishURL = GameTsCfg.Actor[id].prefab
-                resources.load(fishURL, Prefab, (error, prefab) => {
-                    if (prefab) {
-                        let fishNode = instantiate(prefab);
-                        this.node.addChild(fishNode);
-                        fishNode.setPosition(this.RightFishAreas[i].position);
-                        const mediator = fishNode.getComponent(Mediator);
-                        mediator.loadingActor(actor);
-                        this.rightFishes.push(mediator);
-                        mediator.isReverse = -1;
-                        this._prefabLoadedCount++;
-                    }
-                })
+                let fishNode = await FishNodePool.get(fishURL);
+                if (fishNode) {
+                    this.node.addChild(fishNode);
+                    fishNode.setPosition(this.RightFishAreas[i].position);
+                    const mediator = fishNode.getComponent(Mediator);
+                    mediator.loadingActor(actor);
+                    this.rightFishes.push(mediator);
+                    mediator.isReverse = -1;
+                }
             }
-            this._allPrefabCount += fisheIds.length;
         }
-    }
-
-    start() {
-        profiler.hideStats();
-        this.Loading.getComponent(UIOpacity).opacity = 255;
-        this.initAccountInfo();
-        this.initEnemyFishes()
-        this.stageLabel.getComponent(UIOpacity).opacity = 0;
-        this.stageLabel.string = "第" + this.currentStage + "关";
-    }
-
-    initAccountInfo() {
-        //todo requst accountInfo
-        AccountInfo.getInstance().requestAccountInfo(() => {
-            this.fetchMyFishes();
-        });
     }
 
     getNextActionActor(targets: Mediator[]) {
         let aliveActors = Utils.getAliveActors(targets);
         const sortedActors = aliveActors.sort((a, b) => {
-            if(a.actor==undefined){
+            if (a.actor == undefined) {
                 console.log('pause');
             }
             return b.actor.speed - a.actor.speed;
@@ -166,7 +182,7 @@ export class BattleField extends Component {
         return false;
     }
 
-    battleLoop(targets: Mediator[]) {
+    async battleLoop(targets: Mediator[]) {
 
         //寻找攻击方和防御方
         let attacker = this.getNextActionActor(targets);
@@ -178,14 +194,14 @@ export class BattleField extends Component {
 
         const startPosition = new Vec3(attacker.node.worldPosition.x, attacker.node.worldPosition.y, attacker.node.worldPosition.z);
         let headCommand: Command;
-        let endCommand = new EndTurnCoomand(() => {
+        let endCommand = new EndTurnCoomand(async () => {
             if (this.checkGameover()) {
                 this.stageLabel.string = "游戏失败";
             } else {
                 const rightAliveFishes = Utils.getAliveActors(this.rightFishes);
                 if (rightAliveFishes && rightAliveFishes.length == 0) {
                     if (this.hasNextStage()) {
-                        this.gotoNextStage();
+                        await this.gotoNextStage();
                     } else {
                         this.stageLabel.string = "游戏胜利";
                     }
@@ -195,9 +211,9 @@ export class BattleField extends Component {
                     targets = Utils.getAliveActors(targets);
                     targets = targets.filter(fish => fish.actor.uuId != attacker.actor.uuId);
                     if (targets.length > 0) {
-                        this.battleLoop(targets);
+                        await this.battleLoop(targets);
                     } else {
-                        this.battleLoop([...this.leftFishes, ...this.rightFishes]);
+                        await this.battleLoop([...this.leftFishes, ...this.rightFishes]);
                     }
                 }
             }
@@ -274,27 +290,21 @@ export class BattleField extends Component {
         }
     }
 
-    gotoNextStage() {
-        this.Loading.getComponent(UIOpacity).opacity = 255;
+    async gotoNextStage() {
+        this.showLoading(true);
+        this.fireAreaField.closeFire();
         this.currentStage++;
         this.stageLabel.string = "第" + this.currentStage + "关";
         this.leftFishes = Utils.getAliveActors(this.leftFishes);
 
         this.rightFishes = [];
-        this._prefabLoadedCount = 0;
-        this._allPrefabCount = 0;
-        this._isBattleBegin = false;
-        this.initEnemyFishes();
-        this.fireAreaField.closeFire();
+        await this.initEnemyFishes();
+        this.showLoading(false);
+        await this.battleLoop(([...this.leftFishes, ...this.rightFishes]));
+        this.fireAreaField.openFire(this.rightFishes);
     }
 
-    update(deltaTime: number) {
-        if (this._allPrefabCount == this._prefabLoadedCount && (this._isBattleBegin == false)) {
-            this._isBattleBegin = true;
-            this.Loading.getComponent(UIOpacity).opacity = 0;
-            this.stageLabel.getComponent(UIOpacity).opacity = 255;
-            this.battleLoop(([...this.leftFishes, ...this.rightFishes]));
-            this.fireAreaField.openFire(this.rightFishes);
-        }
+    showLoading(isShow: boolean) {
+        this.loadingOpacity.opacity = isShow ? 255 : 0;
     }
 }

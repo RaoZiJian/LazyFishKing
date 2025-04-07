@@ -16,11 +16,10 @@ export class RoleScrollView extends Component {
     private _currentAvatarBgIndex = 0;
 
     start() {
-        let account = AccountInfo.getInstance();
-        const actorAmount = account.actors.length;
+        const actorAmount = AccountInfo.actors.length;
         this.creatAccountRoleItem();
         for (let i = 0; i < actorAmount; i++) {
-            let actor = account.actors[i];
+            let actor = AccountInfo.actors[i];
             this.createRoleItem(actor, this._getAvatarBgByIndex());
         }
     }

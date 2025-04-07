@@ -12,7 +12,7 @@ export class BagScrollView extends Component {
     content: Node;
 
     start() {
-        let myBag = AccountInfo.getInstance().bag;
+        let myBag = AccountInfo.bag;
         myBag.forEach((item, key) => {
             resources.load(RES_URL.bagItem, Prefab, (error, prefab) => {
                 if (prefab) {

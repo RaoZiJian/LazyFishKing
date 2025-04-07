@@ -59,18 +59,6 @@ export class Utils {
         return baseAttack + (level - 1) * Constants.attackRaisePerLevel;
     }
 
-    static getFakeDataBagItmes() {
-        let itemsCfg = GameTsCfg.Item;
-        for (let i = 0; i < Object.keys(itemsCfg).length; i++) {
-            let itemCfg = itemsCfg[Object.keys(itemsCfg)[i]];
-            let amount = 999;
-            if (itemCfg.id == 13) {
-                amount = 1000;
-            }
-            let item = new Item(itemCfg.id, itemCfg.name, itemCfg.des, itemCfg.spriteFrame, amount);
-            AccountInfo.getInstance().bag.set(item.id, item);
-        }
-    }
 
     static getLevelUpCost(level: number, exp: number) {
         let levelCfg = GameTsCfg.Level;

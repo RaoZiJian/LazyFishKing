@@ -1,8 +1,7 @@
-import { _decorator, Component, log, Node } from 'cc';
+import { _decorator, log } from 'cc';
 import { Actor } from './Actor/Actor';
-import { Utils } from './Utils';
 import { Item } from './Item';
-import { LazyFishId, TestAccountId } from './Constants';
+import { TestAccountId } from './Constants';
 import { postdata } from './Request/HttpRequest';
 import GameTsCfg from './data/client/GameTsCfg';
 
@@ -10,72 +9,42 @@ const { ccclass } = _decorator;
 
 @ccclass('AccountInfo')
 export class AccountInfo {
+    // 静态实例引用
+    private static _instance: AccountInfo = null;
+
+    // 实例属性保持原有结构
     private _actors: Actor[] = [];
-    public get actors(): Actor[] {
-        return this._actors;
-    }
-    public set actors(value: Actor[]) {
-        this._actors = value;
-    }
-
     private _baseAttack: number = 50;
-    public get baseAttack(): number {
-        return this._baseAttack;
-    }
-
     private _bag: Map<number, Item> = new Map<number, Item>();
-    public get bag(): Map<number, Item> {
-        return this._bag;
-    }
-
     private _level: number = 1;
-    public get level(): number {
-        return this._level;
-    }
-    public set level(value: number) {
-        this._level = value;
-    }
-
     private _exp: number = 0;
-    public get exp(): number {
-        return this._exp;
-    }
-    public set exp(value: number) {
-        this._exp = value;
-    }
+    private _avatar: string = '';
+    private _name: string = '';
 
-    private _attack: number = 0;
-    public get attack(): number {
+    // 静态属性访问器
+    static get actors(): Actor[] { return this.instance._actors; }
+    static get level(): number { return this.instance._level; }
+    static set level(value: number) { this.instance._level = value; }
+    static get exp(): number { return this.instance._exp; }
+    static set exp(value: number) { this.instance._exp = value; }
+    static get avatar(): string { return this.instance._avatar; }
+    static set avatar(value: string) { this.instance._avatar = value; }
+    static get accountName(): string { return this.instance._name; }
+    static set accountName(value: string) { this.instance._name = value; }
+    static get bag(): Map<number, Item> { return this.instance._bag; }
+    static get attack(): number {
         return GameTsCfg.PlayerLevel[this.level].attack || 0;
     }
 
-    private _avatar: string = '';
-    public get avatar(): string {
-        return this._avatar;
-    }
-    public set avatar(value: string) {
-        this._avatar = value;
-    }
-
-    private _name: string = '';
-    public get name(): string {
-        return this._name;
-    }
-    public set name(value: string) {
-        this._name = value;
-    }
-
-    private static instance: AccountInfo = undefined;
-
-    static getInstance() {
-        if (!this.instance) {
-            this.instance = new AccountInfo();
-            Utils.getFakeDataBagItmes();
+    // 单例访问点
+    private static get instance(): AccountInfo {
+        if (!this._instance) {
+            this._instance = new AccountInfo();
         }
-        return this.instance;
+        return this._instance;
     }
-
-    async requestAccountInfo(cb: () => void) {
+    // 请求方法
+    static async requestAccountInfo() {
         const accountInfo = { accountId: TestAccountId }
         await postdata('http://localhost:8888/account', accountInfo)
             .then((data) => {
@@ -84,36 +53,33 @@ export class AccountInfo {
                 this.parseBag(data.bags);
                 this.level = data?.level;
                 this.exp = data?.exp;
-                this.name = data?.name;
+                this.accountName = data?.name;
                 this.avatar = data?.avatar;
-                if (cb) {
-                    cb();
-                }
             }).catch((error) => {
                 log("/account/ error: ", error);
             });
     }
 
-    async requestUpdateAccountLevel(level: number, cb: () => void) {
+    // 其他请求方法改造示例
+    static async requestUpdateAccountLevel(level: number, cb: () => void) {
         const reqData = { accountId: TestAccountId, level: level };
         await postdata('http://localhost:8888/account/updateLevel', reqData)
             .then((data) => {
                 log("/account/updateLevel: ", data);
-                if (data && data.account) {
-                    this.level = data.account?.level;
-                    this.exp = data.account?.exp;
-                    this.name = data.account?.name;
-                    this.avatar = data.account?.avatar;
+                if (data?.account) {
+                    this.level = data.account.level;
+                    this.exp = data.account.exp;
+                    this.accountName = data.account.name;
+                    this.avatar = data.account.avatar;
                 }
-                if (cb) {
-                    cb();
-                }
+                cb?.();
             }).catch((error) => {
                 log("/account/updateLevel error: ", error);
             });
     }
 
-    async requestUpdateActorLevel(actorId: number, cb: () => void) {
+
+    static async requestUpdateActorLevel(actorId: number, cb: () => void) {
         const reqData = { accountId: TestAccountId, actorId: actorId };
         await postdata('http://localhost:8888/account/updateActorLevel', reqData)
             .then((data) => {
@@ -134,7 +100,7 @@ export class AccountInfo {
             });
     }
 
-    async requestAddItem(itemId: number, amount: number, cb: () => void) {
+    static async requestAddItem(itemId: number, amount: number, cb: () => void) {
         const reqData = { accountId: TestAccountId, itemId: itemId, amount: amount };
         await postdata('http://localhost:8888/account/addItem', reqData)
             .then((data) => {
@@ -150,37 +116,35 @@ export class AccountInfo {
             });
     }
 
-    parseActor(actorData: any[]) {
-        for (let i = 0; i < actorData.length; i++) {
-            if (actorData[i].actorId) {
-                let actor = new Actor(actorData[i].actorId);
-                actor.level = actorData[i]?.actorLevel;
-                actor.exp = actorData[i]?.exp;
-                this.actors.push(actor);
-            } else {
-                log("actorData error: no actorId", actorData[i]);
+    private static parseActor(actorData: any[]) {
+        this.instance._actors = actorData.map(data => {
+            if (!data.actorId) {
+                log("actorData error: no actorId", data);
+                return null;
             }
-        }
+            const actor = new Actor(data.actorId);
+            actor.level = data?.actorLevel;
+            actor.exp = data?.exp;
+            return actor;
+        }).filter(Boolean);
     }
 
-    parseBag(bagData: any[]) {
+    private static parseBag(bagData: any[]) {
         const itemCfg = GameTsCfg.Item;
         for (let i = 0; i < bagData.length; i++) {
             if (bagData[i].itemId) {
                 const itemInfo = itemCfg[bagData[i].itemId];
                 let item = new Item(bagData[i].itemId, itemInfo.name, itemInfo.desc, itemInfo.spriteFrame, bagData[i].itemAmount);
-                this.bag.set(bagData[i].itemId, item);
-            } else {
-                log("bagData error: no itemId", bagData[i]);
+                this.instance._bag.set(bagData[i].itemId, item);
             }
         }
     }
 
-    getMoney(): number {
-        return this.bag.get(13).amount;
+    public static getMoney(): number {
+        return this.instance._bag.get(13).amount;
     }
 
-    acountLevelUp(cb: () => void) {
+    public static acountLevelUp(cb: () => void) {
         this.requestUpdateAccountLevel(this.level, () => {
             this.level++;
             this.exp = 0;
@@ -190,7 +154,7 @@ export class AccountInfo {
         });
     }
 
-    actorLevelUp(actorId: number, cb: () => void) {
+    public static actorLevelUp(actorId: number, cb: () => void) {
         this.requestUpdateActorLevel(actorId, () => {
             if (cb) {
                 cb();
@@ -198,7 +162,7 @@ export class AccountInfo {
         });
     }
 
-    addItem(itemId: number, amount: number) {
+    public static addItem(itemId: number, amount: number) {
         let item = this.bag.get(itemId);
         if (item) {
             item.amount += amount;

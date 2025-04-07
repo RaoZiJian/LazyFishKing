@@ -56,10 +56,9 @@ export class RoleItem extends Component {
     start() {
         this.buyBtn.on(Button.EventType.CLICK, () => {
             let cost = Utils.getLevelUpCost(this.actor.level, this.actor.exp);
-            let account = AccountInfo.getInstance();
-            let isLevelUpMoneyEnough = account.getMoney() - cost > 0;
+            let isLevelUpMoneyEnough = AccountInfo.getMoney() - cost > 0;
             if (isLevelUpMoneyEnough) {
-                account.actorLevelUp(this.actor.id, () => {
+                AccountInfo.actorLevelUp(this.actor.id, () => {
                     this.refreshItem();
                 })
             }
@@ -85,7 +84,7 @@ export class RoleItem extends Component {
         })
 
         let cost = Utils.getLevelUpCost(this.actor.level, this.actor.exp);
-        let isLevelUpMoneyEnough = AccountInfo.getInstance().getMoney() - cost > 0;
+        let isLevelUpMoneyEnough = AccountInfo.getMoney() - cost > 0;
         this.coins.string = cost.toString();
         this.coins.color = isLevelUpMoneyEnough ? Color.GREEN : Color.RED;
 

@@ -43,11 +43,10 @@ export class AccountRoleItem extends Component {
 
     start() {
         this.buyBtn.on(Button.EventType.CLICK, () => {
-            const account = AccountInfo.getInstance();
-            let cost = Utils.getAccountLevelUpCost(account.level, account.exp);
-            let isLevelUpMoneyEnough = AccountInfo.getInstance().getMoney() - cost > 0;
+            let cost = Utils.getAccountLevelUpCost(AccountInfo.level, AccountInfo.exp);
+            let isLevelUpMoneyEnough = AccountInfo.getMoney() - cost > 0;
             if (isLevelUpMoneyEnough) {
-                account.acountLevelUp(()=>{
+                AccountInfo.acountLevelUp(()=>{
                     this.refreshItem();
                 });
             }
@@ -60,9 +59,7 @@ export class AccountRoleItem extends Component {
     }
 
     refreshItem() {
-        const account = AccountInfo.getInstance();
-
-        resources.load(account.avatar + "/spriteFrame", SpriteFrame, (error, spriteframe) => {
+        resources.load(AccountInfo.avatar + "/spriteFrame", SpriteFrame, (error, spriteframe) => {
             if (spriteframe) {
                 this.avatar.spriteFrame = spriteframe;
             }
@@ -72,15 +69,15 @@ export class AccountRoleItem extends Component {
             this.avatarBg.spriteFrame = spriteframe;
         })
 
-        let cost = Utils.getLevelUpCost(account.level, account.exp);
-        let isLevelUpMoneyEnough = AccountInfo.getInstance().getMoney() - cost > 0;
+        let cost = Utils.getLevelUpCost(AccountInfo.level, AccountInfo.exp);
+        let isLevelUpMoneyEnough = AccountInfo.getMoney() - cost > 0;
         this.coins.string = cost.toString();
         this.coins.color = isLevelUpMoneyEnough ? Color.GREEN : Color.RED;
 
-        this.roleName.string = account.name;
-        this.roleLevel.string = "Lv." + account.level.toString();
-        this.roleAttack.string = "攻击力:" + account.attack;
-        const percent = Utils.getLevelUpPercent(account.level, account.exp)
+        this.roleName.string = AccountInfo.name;
+        this.roleLevel.string = "Lv." + AccountInfo.level.toString();
+        this.roleAttack.string = "攻击力:" + AccountInfo.attack;
+        const percent = Utils.getLevelUpPercent(AccountInfo.level, AccountInfo.exp)
         this.percent.string = percent.toString() + "%";
         this.progress.progress = percent;
     }

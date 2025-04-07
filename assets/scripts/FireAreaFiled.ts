@@ -55,7 +55,7 @@ export class FireAreaFiled extends Component {
                 const bullet = resPool.getClickBulletNode();
                 this.canvas.getChildByName("EffectLayer").addChild(bullet);
                 bullet.worldPosition = clickPosition;
-                const attack = AccountInfo.getInstance().attack;
+                const attack = AccountInfo.attack;
 
                 if (attack == 0) {
                     return;
@@ -63,7 +63,7 @@ export class FireAreaFiled extends Component {
                 bullet.getComponent(Bullet).fire(defender, Constants.clickBulletFlyTime, 1, () => {
                     resPool.putNode(bullet);
                     bullet.removeFromParent();
-                    let clickBulletDamage = Math.max(1, AccountInfo.getInstance().attack - defender.actor.denfence);
+                    let clickBulletDamage = Math.max(1, AccountInfo.attack - defender.actor.denfence);
                     const isDead = (defender.actor.hp - clickBulletDamage) <= 0;
                     if (!isDead) {
                         const hurtCommand = new HurtCommand(defender, clickBulletDamage);
