@@ -9,14 +9,6 @@ export class BagItem extends Component {
 
     @property(Label)
     amount: Label;
-
-    start() {
-
-    }
-
-    update(deltaTime: number) {
-
-    }
 }
 
 

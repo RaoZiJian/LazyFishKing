@@ -3,14 +3,19 @@ import { Constants, RES_URL } from './Constants';
 import { Mediator } from './mediator/Mediator';
 import { Utils } from './Utils';
 import { BulletFireExplosion, DeadCommand, HurtCommand } from './Command/Command';
-import { ResPool } from './ResPool';
+import { PoolType, ResPool } from './ResPool';
 import { Bullet } from './Bullets/Bullet';
 import { AccountInfo } from './AccountInfo';
-const { ccclass, property } = _decorator;
+const { ccclass } = _decorator;
 
+/**
+ * @class FireAreaFiled
+ * @brief 玩家触摸发射火球的区域
+ */
 @ccclass('FireAreaFiled')
 export class FireAreaFiled extends Component {
 
+    // 点击效果节点
     private _clickNode: Node;
     public get clickNode(): Node {
         return this._clickNode;
@@ -19,6 +24,7 @@ export class FireAreaFiled extends Component {
         this._clickNode = value;
     }
 
+    // 画布节点
     private _canvas: Node;
     public get canvas(): Node {
         return this._canvas;
@@ -27,6 +33,10 @@ export class FireAreaFiled extends Component {
         this._canvas = value;
     }
 
+    /**
+     * 组件初始化
+     * 加载点击效果资源，并设置动画播放和结束时的透明度
+     */
     start() {
         resources.load(RES_URL.clickEffect, Prefab, (error, prefab) => {
             if (prefab) {
@@ -45,14 +55,18 @@ export class FireAreaFiled extends Component {
         })
     }
 
-    openFire(targets: Mediator[]) {
-        this.node.on(NodeEventType.MOUSE_DOWN, (event) => {
+    /**
+     * 开始射击
+     * 监听鼠标点击事件，创建子弹并计算伤害
+     * @param targets 目标数组，包含所有可被射击的目标
+     */
+    async openFire(targets: Mediator[]) {
+        this.node.on(NodeEventType.MOUSE_DOWN, async (event) => {
 
             const clickPosition = new Vec3(event.getUILocation().x, event.getUILocation().y, this.clickNode.worldPosition.z);
             const defender = Utils.getNextDefender(targets);
             if (defender && defender.isAlive) {
-                const resPool = this.canvas.getComponent(ResPool);
-                const bullet = resPool.getClickBulletNode();
+                const bullet = await ResPool.Instance.getNode(PoolType.CLICK_BULLET);
                 this.canvas.getChildByName("EffectLayer").addChild(bullet);
                 bullet.worldPosition = clickPosition;
                 const attack = AccountInfo.attack;
@@ -60,21 +74,21 @@ export class FireAreaFiled extends Component {
                 if (attack == 0) {
                     return;
                 }
-                bullet.getComponent(Bullet).fire(defender, Constants.clickBulletFlyTime, 1, () => {
-                    resPool.putNode(bullet);
+                bullet.getComponent(Bullet).fire(defender, Constants.clickBulletFlyTime, 1, async () => {
+                    ResPool.Instance.putNode(PoolType.CLICK_BULLET, bullet);
                     bullet.removeFromParent();
                     let clickBulletDamage = Math.max(1, AccountInfo.attack - defender.actor.denfence);
                     const isDead = (defender.actor.hp - clickBulletDamage) <= 0;
                     if (!isDead) {
                         const hurtCommand = new HurtCommand(defender, clickBulletDamage);
-                        hurtCommand.execute();
+                        await hurtCommand.execute();
                     } else {
                         const deadCommand = new DeadCommand(defender);
-                        deadCommand.execute();
+                        await deadCommand.execute();
                     }
 
                     const explosion = new BulletFireExplosion(defender);
-                    explosion.execute();
+                    await explosion.execute();
                 });
             }
 
@@ -83,15 +97,10 @@ export class FireAreaFiled extends Component {
         })
     }
 
+    /**
+     * 结束射击
+     */
     closeFire() {
 
     }
-
-    update(deltaTime: number) {
-
-    }
-
-
 }
-
-

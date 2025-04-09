@@ -1,8 +1,6 @@
-import { _decorator, Component, director, Node } from 'cc';
+import { _decorator } from 'cc';
 import { Mediator } from './Mediator';
 import { Actor } from '../Actor/Actor';
-import { LazyFishId } from '../Constants';
-import { StateMachine, States } from '../stateMachine/StateMachine';
 import { ResPool } from '../ResPool';
 const { ccclass, property } = _decorator;
 
@@ -14,8 +12,6 @@ export class XuChuMediator extends Mediator {
 
     loadingActor(actor: Actor) {
         super.loadingActor(actor);
-        const resPool = director.getScene().getChildByName("Canvas").getComponent(ResPool);
-        resPool.loadBladeWindSkill();
     }
 
     start(): void {
@@ -23,7 +19,7 @@ export class XuChuMediator extends Mediator {
     }
 
     update(deltaTime: number) {
-        
+
     }
 }
 

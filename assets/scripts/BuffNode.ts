@@ -6,14 +6,6 @@ export class BuffNode extends Component {
 
     @property(Label)
     label: Label;
-
-    start() {
-
-    }
-
-    update(deltaTime: number) {
-
-    }
 }
 
 

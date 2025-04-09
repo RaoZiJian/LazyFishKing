@@ -1,8 +1,7 @@
 import { BattleField } from "../BattleField";
 import { Mediator } from "../mediator/Mediator";
 import { Utils } from "../Utils";
-import { BladeWindSkill, HealingGroupSkill, JumpAttackSkill, SingleTauntSkill, WindMagicSkill } from "./MainSkill";
-import { Node } from "cc";
+import { BladeWindSkill, HealingGroupSkill, JumpAttackSkill, MainSkill, SingleTauntSkill, WindMagicSkill } from "./MainSkill";
 
 export const skillIdEnum = {
     taunt: 1,
@@ -13,22 +12,31 @@ export const skillIdEnum = {
 }
 
 export class MainSkillFactory {
-    static createMainSkill(id: number, caster: Mediator, targets: Mediator[], battleFiled: BattleField) {
+    static async createMainSkill(id: number, caster: Mediator, targets: Mediator[], battleFiled: BattleField): Promise<MainSkill> {
+        let skill: MainSkill;
         switch (id) {
             case skillIdEnum.taunt:
-                return new SingleTauntSkill(id, caster, targets);
+                skill = new SingleTauntSkill(id, caster, targets);
+                break;
             case skillIdEnum.jumpAttack:
-                return new JumpAttackSkill(id, caster, targets);
+                skill = new JumpAttackSkill(id, caster, targets);
+                break;
             case skillIdEnum.healingGroup:
                 const myAlivefishes = Utils.getAliveActors(battleFiled.leftFishes);
-                return new HealingGroupSkill(id, caster, myAlivefishes);
+                skill = new HealingGroupSkill(id, caster, myAlivefishes);
+                break;
             case skillIdEnum.windMagic:
-                return new WindMagicSkill(id, caster, targets);
+                skill = new WindMagicSkill(id, caster, targets);
+                break;
             case skillIdEnum.bladeWind:
-                return new BladeWindSkill(id, caster, targets);
+                skill = new BladeWindSkill(id, caster, targets);
+                break;
             default:
                 break;
         }
+
+        await skill.preloadRes();
+        return skill;
     }
 
 }

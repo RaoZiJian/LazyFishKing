@@ -4,11 +4,12 @@ import { Constants, LazyFishId } from './Constants';
 import { Utils } from './Utils';
 import { Mediator } from './mediator/Mediator';
 import { Actor, AttackType } from './Actor/Actor';
-import { AttackCommand, BulletFireCommnad, Command, EndTurnCoomand, MainSkillCastCommand, MoveCommand, ShootingCommand } from './Command/Command';
+import { AttackCommand, BulletFireCommnad, Command, EndTurnCommand, MainSkillCastCommand, MoveCommand, ShootingCommand } from './Command/Command';
 import { ShootingMediator } from './mediator/ShootingMediator';
 import { FireAreaFiled } from './FireAreaFiled';
 import { AccountInfo } from './AccountInfo';
 import { FishNodePool } from './FishNodePool';
+import { ResPool } from './ResPool';
 const { ccclass, property } = _decorator;
 
 @ccclass('BattleField')
@@ -68,46 +69,54 @@ export class BattleField extends Component {
      * 本函数负责按顺序初始化游戏的各种状态和资源，并开始战斗循环
      */
     async start() {
-        // 显示加载中的状态
         this.showLoading(true);
-        // 请求账户信息，可能包括玩家数据和游戏设置等
         await AccountInfo.requestAccountInfo();
-        // 预加载游戏资源，如模型和纹理等
         await this.preloadPrefabs();
-        // 初始化玩家的鱼
         await this.initMyFishes();
-        // 初始化敌方的鱼
         await this.initEnemyFishes()
-        // 隐藏加载中的状态
+        await ResPool.Instance.initialize(true);
         this.showLoading(false);
 
-        // 设置关卡标签的透明度为0，准备更新关卡信息
         this.stageLabel.getComponent(UIOpacity).opacity = 0;
-        // 更新关卡标签的文本内容
         this.stageLabel.string = "第" + this.currentStage + "关";
-        // 恢复关卡标签的透明度，使其可见
         this.stageLabel.getComponent(UIOpacity).opacity = 255;
-        // 开始战斗循环，传入所有鱼的列表
+
+        // 开始战斗循环，传入所有武将的列表
         await this.battleLoop(([...this.leftFishes, ...this.rightFishes]));
-        // 开启右方鱼的攻击模式
+        // 打开触摸发动攻击的面板
         this.fireAreaField.openFire(this.rightFishes);
     }
 
+    /**
+     * 异步预加载所有武将的prefab资源
+     * 此函数的目的是在游戏开始之前加载所有必要的武将模型，以提高游戏运行时的性能
+     */
     async preloadPrefabs() {
+        // 获取武将配置的总数
         const actorLength = Object.keys(GameTsCfg.Actor).length;
         for (let i = 0; i < actorLength; i++) {
             let key = Object.keys(GameTsCfg.Actor)[i];
             let prefab = GameTsCfg.Actor[key].prefab;
+            // 预加载单个prefab资源，参数1表示只预加载一个实例
             await FishNodePool.preloadSingle(prefab, 1);
         }
     }
 
+    /**
+     * 异步初始化我的武将
+     * 该方法遍历账户信息中的所有武将，并在场景中添加相应的武将节点
+     * Actor中也将个人账户保存了进去，目前处理为忽略
+     */
     async initMyFishes() {
+        // 遍历账户信息中的所有武将
         for (let i = 0; i < AccountInfo.actors.length; i++) {
             const actor = AccountInfo.actors[i];
+            // 检查武将ID是否为要忽略的特定ID
             if (actor.id != LazyFishId.MyActor) {
                 const fishURL = GameTsCfg.Actor[actor.id].prefab;
+                // 从武将节点池中获取武将节点
                 let fishNode = await FishNodePool.get(fishURL);
+                // 如果成功获取武将节点，则将其添加到场景中
                 if (fishNode) {
                     this.node.addChild(fishNode);
                     fishNode.setPosition(this.LeftFishAreas[i].position);
@@ -119,8 +128,13 @@ export class BattleField extends Component {
         }
     }
 
+    /**
+     * 异步初始化敌方武将类
+     * 
+     * 解析关卡中的武将类ID，并根据这些ID创建武将类实例并放置在游戏场景中
+     */
     async initEnemyFishes() {
-        // http request get currentStage
+        // todo http request get currentStage
         const stages = GameTsCfg.Stage;
         if (stages[this.currentStage]) {
             const stage = stages[this.currentStage];
@@ -143,22 +157,46 @@ export class BattleField extends Component {
         }
     }
 
+    /**
+     * 获取下一个行动的武将
+     * 该函数用于从一组武将中筛选出下一个应该执行动作的武将
+     * 主要依据武将的速度属性进行排序，速度较快的武将优先行动
+     * 
+     * @param targets {Mediator[]} - 一组武将对象，从中确定下一个行动的武将
+     * @returns {Mediator} - 返回速度最快的活着的武将，如果没有合适的武将则返回undefined
+     */
     getNextActionActor(targets: Mediator[]) {
+        // 筛选出所有活着的武将
         let aliveActors = Utils.getAliveActors(targets);
+
+        // 按照武将的速度降序排序
         const sortedActors = aliveActors.sort((a, b) => {
+            // 如果武将未定义，输出日志以便调试
             if (a.actor == undefined) {
                 console.log('pause');
             }
+            // 根据武将的速度进行比较，速度较快的武将排在前面
             return b.actor.speed - a.actor.speed;
         })
 
+        // 如果排序后的武将数组不为空，返回第一个武将，否则返回undefined
         if (sortedActors) {
             return sortedActors[0];
         }
     }
 
+    /**
+     * 判断目标武将是否来自左侧
+     * 
+     * 此函数通过比较目标武将与左侧武将集合中的元素是否具有相同的UUID来确定目标是否来自左侧
+     * 它用于在某种场景下区分或识别特定的武将对象
+     * 
+     * @param target Mediator类型的参数，表示待检查的目标武将
+     * @returns 返回一个布尔值，如果目标武将来自左侧，则为true；否则为false
+     */
     isActorFromLeft(target: Mediator): boolean {
         let result = false;
+        // 遍历左侧武将集合，检查是否有与目标武将相同的UUID
         this.leftFishes.forEach(element => {
             if (element.actor.uuId == target.actor.uuId) {
                 result = true;
@@ -168,22 +206,40 @@ export class BattleField extends Component {
         return result;
     }
 
+    /**
+     * 检查施法者是否可以使用其主技能
+     * 
+     * 此函数主要用于判断当前施法者是否有足够的怒气来使用其配置的主技能它首先获取施法者配置的主技能ID，
+     * 然后检查该游戏配置中是否存在该技能如果存在，则进一步检查施法者当前的怒气值是否达到技能所需的怒气消耗
+     * 
+     * @param caster {Mediator} - 施法者对象，即请求施放技能的实体
+     * @returns {boolean} 如果施法者可以使用其主技能，则返回true；否则返回false
+     */
     isCanSkill(caster: Mediator): boolean {
+        // 获取施法者的主技能ID
         const skillId = caster.actor.cfg.MainSkill;
+        // 检查游戏配置中是否存在该主技能
         if (GameTsCfg.MainSkill[skillId]) {
+            // 获取主技能所需的怒气消耗
             const rageCost = GameTsCfg.MainSkill[skillId].rageCost;
+            // 比较技能所需的怒气消耗与施法者当前的怒气值
             if (rageCost > caster.actor.rage) {
+                // 如果怒气不足，则不能使用技能
                 return false;
             } else {
+                // 如果怒气足够，则可以使用技能
                 return true;
             }
         }
 
+        // 如果游戏配置中不存在该主技能，则默认返回不能使用技能
         return false;
     }
-
+    /**
+     * 异步执行战斗循环
+     * @param targets 参与战斗的目标列表
+     */
     async battleLoop(targets: Mediator[]) {
-
         //寻找攻击方和防御方
         let attacker = this.getNextActionActor(targets);
         if (!attacker) {
@@ -192,9 +248,11 @@ export class BattleField extends Component {
         const isAttackerLeft = this.isActorFromLeft(attacker);
         let defender: Mediator = isAttackerLeft ? Utils.getNextDefender(this.rightFishes) : Utils.getNextDefender(this.leftFishes);
 
+        //保存攻击者初始位置
         const startPosition = new Vec3(attacker.node.worldPosition.x, attacker.node.worldPosition.y, attacker.node.worldPosition.z);
         let headCommand: Command;
-        let endCommand = new EndTurnCoomand(async () => {
+        //定义回合结束后的操作
+        let endCommand = new EndTurnCommand(async () => {
             if (this.checkGameover()) {
                 this.stageLabel.string = "游戏失败";
             } else {
@@ -206,6 +264,7 @@ export class BattleField extends Component {
                         this.stageLabel.string = "游戏胜利";
                     }
                 } else {
+                    //更新存活的武将列表，并继续战斗循环
                     this.leftFishes = Utils.getAliveActors(this.leftFishes);
                     this.rightFishes = Utils.getAliveActors(this.rightFishes);
                     targets = Utils.getAliveActors(targets);
@@ -218,6 +277,8 @@ export class BattleField extends Component {
                 }
             }
         })
+
+        //根据攻击类型决定战斗流程
         let attackType = attacker.actor.cfg.attackType;
         if (attackType == AttackType.Chest) {
             headCommand = endCommand;
@@ -227,11 +288,15 @@ export class BattleField extends Component {
             const targets = isAttackerLeft ? this.rightFishes : this.leftFishes;
 
             if (skillCfg.shouldMove == 1) {
+                //执行技能并移动
                 const skillCommand = new MainSkillCastCommand(attacker, targets, id, this);
+                await skillCommand.preloadRes();
                 skillCommand.nextCommand = endCommand;
                 headCommand = skillCommand;
             } else {
+                //执行技能前移动到指定位置再执行技能
                 const skillCommand = new MainSkillCastCommand(attacker, targets, id, this);
+                await skillCommand.preloadRes();
                 const moveTarget = skillCommand.getMoveTarget();
                 const targePostion = new Vec3(moveTarget.node.worldPosition.x + moveTarget.getModelWidth() * moveTarget.isReverse, moveTarget.node.worldPosition.y, moveTarget.node.worldPosition.z);
                 const move = new MoveCommand(attacker, targePostion, Constants.moveDuration);
@@ -244,6 +309,7 @@ export class BattleField extends Component {
             }
 
         } else {
+            //普通攻击流程
             if (attackType == AttackType.MeleeAttack) {
                 const targePostion = new Vec3(defender.node.worldPosition.x + defender.getModelWidth() * defender.isReverse, defender.node.worldPosition.y, defender.node.worldPosition.z);
                 const move = new MoveCommand(attacker, targePostion, Constants.moveDuration);
@@ -254,6 +320,7 @@ export class BattleField extends Component {
                 attack.nextCommand = moveBack;
                 headCommand = move;
             } else if (attackType == AttackType.Shooting) {
+                //射击攻击流程
                 let shootingMediator = attacker as ShootingMediator;
                 let bullet = shootingMediator.cloneArrow();
                 if (bullet) {
@@ -266,23 +333,44 @@ export class BattleField extends Component {
             }
         }
 
+        //执行战斗命令
         if (headCommand) {
-            headCommand.execute();
+           await headCommand.execute();
         }
     }
-
+    /**
+     * 检查游戏是否结束
+     * 
+     * 本函数通过检查剩余存活的武将的数量来判断游戏是否结束如果某一方的武将全部死亡，
+     * 则认为游戏结束
+     * 
+     * @returns {boolean} 如果游戏结束，返回true；否则返回false
+     */
     checkGameover(): boolean {
+        // 获取左侧剩余存活的武将
         const leftAliveFishes = Utils.getAliveActors(this.leftFishes);
 
+        // 如果左侧没有存活的武将，则游戏结束，返回true
         if (leftAliveFishes && leftAliveFishes.length == 0) {
             return true;
         }
 
+        // 如果左侧有存活的武将，则游戏未结束，返回false
         return false;
     }
 
+    /**
+     * 检查是否存在下一关卡。
+     * 
+     * 该方法通过检查当前关卡配置中是否存在下一个关卡来确定游戏是否还有后续关卡。
+     * 
+     * @returns 如果存在下一关卡，返回 true；否则返回 false。
+     */
     hasNextStage(): boolean {
+        // 获取游戏的关卡配置
         const stageCfg = GameTsCfg.Stage;
+
+        // 判断当前关卡的下一个关卡配置是否存在
         if (!stageCfg[this.currentStage + 1]) {
             return false;
         } else {
@@ -290,17 +378,27 @@ export class BattleField extends Component {
         }
     }
 
+    /**
+     * 异步方法：进入下一个关卡
+     * 本方法负责推进游戏进程到下一关卡，包括加载、初始化和启动新关卡的战斗循环
+     */
     async gotoNextStage() {
         this.showLoading(true);
+        // 禁止触摸发射火球
         this.fireAreaField.closeFire();
         this.currentStage++;
         this.stageLabel.string = "第" + this.currentStage + "关";
+        // 重新计算剩余的武将，准备下一关卡的战斗
         this.leftFishes = Utils.getAliveActors(this.leftFishes);
 
+        // 重置右侧武将数组，准备重新初始化
         this.rightFishes = [];
+        // 初始化敌方武将，此处使用await因为该过程可能涉及异步操作
         await this.initEnemyFishes();
         this.showLoading(false);
-        await this.battleLoop(([...this.leftFishes, ...this.rightFishes]));
+        // 启动战斗循环，包含所有剩余的武将，此处使用await因为战斗循环可能是异步的
+        await this.battleLoop([...this.leftFishes, ...this.rightFishes]);
+        // 开启触摸发射火球，针对右侧的武将
         this.fireAreaField.openFire(this.rightFishes);
     }
 

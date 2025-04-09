@@ -1,12 +1,11 @@
-import { instantiate, Prefab, resources, Node, tween, Vec3, director, Animation, Label } from "cc";
+import { Node, tween, Vec3, director, Animation } from "cc";
 import { Mediator } from "../mediator/Mediator";
-import { StateMachine, States } from "../stateMachine/StateMachine";
-import { Constants, RES_URL } from "../Constants";
+import { States } from "../stateMachine/StateMachine";
+import { Constants } from "../Constants";
 import { DamageNode } from "../DamageNode";
 import { MainSkillFactory } from "../Skill/MainSkillFactory";
 import { MainSkill } from "../Skill/MainSkill";
-import { BuffNode } from "../BuffNode";
-import { ResPool } from "../ResPool";
+import { PoolType, ResPool } from "../ResPool";
 import { BattleField } from "../BattleField";
 import { Bullet } from "../Bullets/Bullet";
 import { ShootingMediator } from "../mediator/ShootingMediator";
@@ -14,9 +13,38 @@ import { AttackType } from "../Actor/Actor";
 import { ChestMediator } from "../mediator/ChestMediator";
 import { AccountInfo } from "../AccountInfo";
 
+export class CommandScheduler {
+    private current: Command | null = null;
+    // 启动执行链
+    async start(head: Command): Promise<void> {
+        this.current = head;
+        while (this.current) {
+            try {
+                await this.current.execute();
+                this.current = this.current.nextCommand;
+            } catch (err) {
+                console.error("指令执行失败:", err);
+                this.current = null; // 中断执行
+                break;
+            }
+        }
+    }
+}
+
+
 export abstract class Command {
 
     private _isFinished: boolean = false;
+    private _duration: number;
+    private _nextCommand: Command;
+    abstract execute(): Promise<void>;
+
+    async complete(): Promise<void> {
+        this.isFinished = true;
+        if (this.nextCommand) {
+            await this.nextCommand.execute();
+        }
+    }
     public get isFinished(): boolean {
         return this._isFinished;
     }
@@ -24,7 +52,6 @@ export abstract class Command {
         this._isFinished = value;
     }
 
-    private _duration: number;
     /**
      * 命令的持续时间
      */
@@ -34,29 +61,18 @@ export abstract class Command {
     public set duration(value: number) {
         this._duration = value;
     }
-
     /**
      * 下一个命令
      */
-    private _nextCommand: Command;
     public get nextCommand(): Command {
         return this._nextCommand;
     }
     public set nextCommand(value: Command) {
         this._nextCommand = value;
     }
-
-    abstract execute(): void;
-
-    complete(): void {
-        this.isFinished = true;
-        if (this.nextCommand) {
-            this.nextCommand.execute();
-        }
-    }
 }
 
-export class EndTurnCoomand extends Command {
+export class EndTurnCommand extends Command {
 
     private _callback: () => void;
     public get callback(): () => void {
@@ -71,7 +87,7 @@ export class EndTurnCoomand extends Command {
         this.callback = e;
     }
 
-    execute(): void {
+    async execute(): Promise<void> {
         if (this.callback) {
             this.callback();
         }
@@ -121,7 +137,7 @@ export class MoveCommand extends Command {
         this.duration = this.time;
     }
 
-    execute(): void {
+    async execute(): Promise<void> {
         this.target.changeState(States.WALKING);
         tween(this.target.node)
             .to(this.time, { worldPosition: this.targetPos })
@@ -136,6 +152,8 @@ export class MoveCommand extends Command {
 export class AttackCommand extends Command {
 
     private _attacker: Mediator;
+    private _defender: Mediator;
+
     /**
      * 进攻方
      */
@@ -146,7 +164,6 @@ export class AttackCommand extends Command {
         this._attacker = value;
     }
 
-    private _defender: Mediator;
     /**
      * 防御方
      */
@@ -176,7 +193,7 @@ export class AttackCommand extends Command {
         this.duration = this.attacker.stateMachine.getAnimationDuration(States.ATTACKING) * 0.5;
     }
 
-    execute(): void {
+    async execute(): Promise<void> {
         if (this.attacker.isAlive && this.defender.isAlive) {
             this.attacker.changeState(States.ATTACKING);
             const currentRage = this.attacker.getRage() + Constants.rageAdd;
@@ -208,6 +225,7 @@ export class AttackCommand extends Command {
 export class HurtCommand extends Command {
 
     private _target: Mediator;
+    private _damage: number;
     /**
      * 受击对象
      */
@@ -218,7 +236,6 @@ export class HurtCommand extends Command {
         this._target = value;
     }
 
-    private _damage: number;
     /**
      * 伤害
      */
@@ -240,13 +257,12 @@ export class HurtCommand extends Command {
         }
     }
 
-    execute(): void {
+    async execute(): Promise<void> {
         if (this.target.isAlive) {
             this.target.changeState(States.HURT);
             const currentHp = this.target.actor.hp - this.damage;
             this.target.setHp(currentHp > 0 ? currentHp : 0);
-            const resPool = director.getScene().getChildByName("Canvas").getComponent(ResPool);
-            const damageNode = resPool.getDamageNode();
+            const damageNode = await ResPool.Instance.getNode(PoolType.DAMAGE);
             if (damageNode) {
                 this.target.node.addChild(damageNode);
                 const damageComponent = damageNode.getComponent(DamageNode);
@@ -286,10 +302,9 @@ export class DeadCommand extends Command {
         }
     }
 
-    execute(): void {
+    async execute(): Promise<void> {
         if (this.target.isAlive) {
             this.target.changeState(States.DYING);
-            const resPool = director.getScene().getChildByName("Canvas").getComponent(ResPool);
             const battleField = director.getScene().getChildByName("Canvas").getComponentInChildren(BattleField);
             let isActorFromLeft = battleField.isActorFromLeft(this.target);
             if (!isActorFromLeft) {
@@ -297,7 +312,7 @@ export class DeadCommand extends Command {
                 let dropAmount = this.target.actor.cfg.dropAmount;
                 AccountInfo.requestAddItem(dropId, dropAmount, () => { });
             }
-            const damageNode = resPool.getDamageNode();
+            const damageNode = await ResPool.Instance.getNode(PoolType.DAMAGE);
             if (damageNode) {
                 this.target.node.addChild(damageNode);
 
@@ -346,7 +361,7 @@ export class ShootingCommand extends Command {
         this.duration = this.attacker.stateMachine.getAnimationDuration(States.SHOOTING);
     }
 
-    execute(): void {
+    async execute(): Promise<void> {
         if (this.attacker.isAlive && this.defender.isAlive) {
             this.attacker.changeState(States.SHOOTING);
             this.attacker.scheduleOnce(() => {
@@ -399,7 +414,7 @@ export class BulletFireCommnad extends Command {
         this.duration = duration;
     }
 
-    execute(): void {
+    async execute(): Promise<void> {
         if (this.target && this.target.isAlive) {
             const effectLayer = director.getScene().getChildByName("Canvas").getChildByName('EffectLayer');
             effectLayer.addChild(this.bullet);
@@ -407,7 +422,7 @@ export class BulletFireCommnad extends Command {
             this.bullet.worldPosition = shootingMediator.arrow.worldPosition;
             const bulletComponent = this.bullet.getComponent(Bullet);
             shootingMediator.changeState(States.IDLE);
-            bulletComponent.fire(this.target, this.duration - 0.1, this.attacker.isReverse, () => {
+            bulletComponent.fire(this.target, this.duration - 0.1, this.attacker.isReverse, async () => {
                 this.bullet.removeFromParent();
                 this.attacker.changeState(States.IDLE);
 
@@ -420,13 +435,13 @@ export class BulletFireCommnad extends Command {
                 const isDead = (this.target.actor.hp - this.damage) <= 0;
                 if (!isDead) {
                     const hurtCommand = new HurtCommand(this.target, this.damage);
-                    hurtCommand.execute();
+                    await hurtCommand.execute();
                 } else {
                     const deadCommand = new DeadCommand(this.target);
-                    deadCommand.execute();
+                    await deadCommand.execute();
                 }
                 const explosion = new BulletFireExplosion(this.target);
-                explosion.execute();
+                await explosion.execute();
                 this.complete();
             })
         } else {
@@ -456,21 +471,19 @@ export class BulletFireExplosion extends Command {
 
     constructor(target: Mediator) {
         super();
-        const resPool = director.getScene().getChildByName("Canvas").getComponent(ResPool);
-        const explosionNode = resPool.getExplosionNode();
-        this.explosionNode = explosionNode;
         this.target = target;
-        this.duration = this.explosionNode.getComponent(Animation).defaultClip.duration;
     }
 
-    execute(): void {
+    async execute(): Promise<void> {
+        this.explosionNode = await ResPool.Instance.getNode(PoolType.EXPLOSION);
         const animation = this.explosionNode.getComponent(Animation);
+        this.duration = this.explosionNode.getComponent(Animation).defaultClip.duration;
+
         this.target.model.addChild(this.explosionNode);
         if (animation) {
             animation.play();
             this.target.scheduleOnce(() => {
-                const resPool = director.getScene().getChildByName("Canvas").getComponent(ResPool);
-                resPool.putNode(this.explosionNode);
+                ResPool.Instance.putNode(PoolType.EXPLOSION, this.explosionNode);
                 this.explosionNode.removeFromParent();
                 this.complete();
             }, this.duration)
@@ -481,22 +494,37 @@ export class BulletFireExplosion extends Command {
 export class MainSkillCastCommand extends Command {
 
     private _caster: Mediator;
+    private _defenders: Mediator[];
+    private _mainSkill: MainSkill;
+    private _skillId: number;
+
+    private _battleField: BattleField;
+    public get battleField(): BattleField {
+        return this._battleField;
+    }
+    public set battleField(value: BattleField) {
+        this._battleField = value;
+    }
+
+    public get skillId(): number {
+        return this._skillId;
+    }
+    public set skillId(value: number) {
+        this._skillId = value;
+    }
+
     public get caster(): Mediator {
         return this._caster;
     }
     public set caster(value: Mediator) {
         this._caster = value;
     }
-
-    private _defenders: Mediator[];
     public get defenders(): Mediator[] {
         return this._defenders;
     }
     public set defenders(value: Mediator[]) {
         this._defenders = value;
     }
-
-    private _mainSkill: MainSkill;
     public get mainSkill(): MainSkill {
         return this._mainSkill;
     }
@@ -508,7 +536,12 @@ export class MainSkillCastCommand extends Command {
         super();
         this.caster = caster;
         this.defenders = denfenders;
-        this.mainSkill = MainSkillFactory.createMainSkill(skillId, caster, denfenders, battleField);
+        this.skillId = skillId;
+        this.battleField = battleField;
+    }
+
+    async preloadRes(): Promise<void> {
+        this.mainSkill = await MainSkillFactory.createMainSkill(this.skillId, this.caster, this.defenders, this.battleField);
         if (this.mainSkill) {
             this.duration = this.mainSkill.duration;
         }
@@ -518,7 +551,7 @@ export class MainSkillCastCommand extends Command {
         return this.mainSkill.getMoveTarget();
     }
 
-    execute(): void {
+    async execute(): Promise<void> {
         if (this.mainSkill) {
             this.caster.changeState(States.CASTING);
             const currentRage = this.caster.getRage() - this.mainSkill.cfg.rageCost;

@@ -3,15 +3,19 @@ import { RES_URL } from '../Constants';
 import { PopUp } from './PopUp';
 const { ccclass, property } = _decorator;
 
+/**
+ * @class BottomMenu
+ * 底部菜单组件，管理角色和背包按钮的事件和弹窗显示
+ */
 @ccclass('BottomMenu')
 export class BottomMenu extends Component {
 
-    @property(Button)
+    @property({ type: Button, tooltip: "角色按钮" })
     roleBtn: Button
 
-    @property(Button)
+    @property({ type: Button, tooltip: "背包按钮" })
     bagBtn: Button;
-    
+
     private _popUp: PopUp;
     public get popUp(): PopUp {
         return this._popUp;
@@ -20,10 +24,14 @@ export class BottomMenu extends Component {
         this._popUp = value;
     }
 
+    // 弹窗的名称常量
     private ROLE_POP_UP = "ROLE_POP_UP";
     private BAG_POP_UP = "BAG_POP_UP";
 
-
+    /**
+     * 组件初始化方法
+     * 绑定角色和背包按钮的点击事件
+     */
     start() {
         this.roleBtn.node.on(Button.EventType.CLICK, () => {
             this.openPopUP(this.ROLE_POP_UP);
@@ -34,6 +42,10 @@ export class BottomMenu extends Component {
         }, this)
     }
 
+    /**
+     * 打开弹窗的方法
+     * @param name 弹窗的名称，用于区分不同的弹窗
+     */
     openPopUP(name: string) {
         resources.load(RES_URL.popUpPrefab, Prefab, (error, prefab) => {
             if (prefab) {
@@ -61,11 +73,15 @@ export class BottomMenu extends Component {
         })
     }
 
+    /**
+     * 添加角色升级弹窗的内容
+     * 加载并显示角色升级相关的界面
+     */
     addRolePopUp() {
         if (this.popUp) {
             this.popUp.title.string = "角色升级";
-            resources.load(RES_URL.roleScollViewPrefab, Prefab, (error, prefab)=>{
-                if(prefab){
+            resources.load(RES_URL.roleScollViewPrefab, Prefab, (error, prefab) => {
+                if (prefab) {
                     let roleScollViewNode = instantiate(prefab);
                     this.popUp.node.addChild(roleScollViewNode);
                     roleScollViewNode.setSiblingIndex(3);
@@ -74,11 +90,15 @@ export class BottomMenu extends Component {
         }
     }
 
+    /**
+     * 添加背包弹窗的内容
+     * 加载并显示背包相关的界面
+     */
     addBagPopUp() {
         if (this.popUp) {
             this.popUp.title.string = "背包";
-            resources.load(RES_URL.bagScrollViewPrefab, Prefab, (error, prefab)=>{
-                if(prefab){
+            resources.load(RES_URL.bagScrollViewPrefab, Prefab, (error, prefab) => {
+                if (prefab) {
                     let bagScrollViewNode = instantiate(prefab);
                     this.popUp.node.addChild(bagScrollViewNode);
                     bagScrollViewNode.setSiblingIndex(3);
@@ -86,10 +106,4 @@ export class BottomMenu extends Component {
             })
         }
     }
-
-    update(deltaTime: number) {
-
-    }
 }
-
-

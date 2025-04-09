@@ -18,6 +18,7 @@ export enum LazyFishId {
 export const Constants = {
     moveDuration: 1,
     shootingDuration: 1,
+    maxFishCount: 5,
     testMyFishCount: 5,
     rageAdd: 50,
     maxRage: 100,
@@ -41,18 +42,18 @@ export const RES_URL = {
     popUpPrefab: "popup/PopupNode",
     roleScollViewPrefab: "popup/RoleScrollView",
     roleItem: "popup/RoleItem",
-    accountRoleItem:"popup/AccountRoleItem",
+    accountRoleItem: "popup/AccountRoleItem",
     bagScrollViewPrefab: "popup/bagScrollView",
     bagItem: "popup/ItemNode"
 }
 
 export const POST_URL = {
-    account : "account",
-    bag:"bag",
-    actors:"actors",
-    battles:"battles",
-    levelup:"levelup",
-    getItem:"getItem"
+    account: "account",
+    bag: "bag",
+    actors: "actors",
+    battles: "battles",
+    levelup: "levelup",
+    getItem: "getItem"
 }
 
 export const TestAccountId = "96e0fa21-770d-4a86-9c5b-bfe3e1184b2c"

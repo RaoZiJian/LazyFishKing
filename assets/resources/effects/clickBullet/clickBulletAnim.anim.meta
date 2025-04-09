@@ -2,12 +2,12 @@
   "ver": "2.0.3",
   "importer": "animation-clip",
   "imported": true,
-  "uuid": "07752728-fc0e-40e3-89ea-2382cdea183d",
+  "uuid": "464a45e1-9b5c-4206-afea-11b680a7ca01",
   "files": [
     ".cconb"
   ],
   "subMetas": {},
   "userData": {
-    "name": "explosion"
+    "name": "clickBulletAnim"
   }
 }

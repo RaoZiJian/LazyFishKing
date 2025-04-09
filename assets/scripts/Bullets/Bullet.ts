@@ -2,6 +2,9 @@ import { _decorator, Component, Node, Vec3, tween } from 'cc';
 import { Mediator } from '../mediator/Mediator';
 const { ccclass, property } = _decorator;
 
+/**
+ * 子弹类，用于控制子弹的行为
+ */
 @ccclass('Bullet')
 export class Bullet extends Component {
 
@@ -17,7 +20,6 @@ export class Bullet extends Component {
         this.lookAt();
     }
 
-
     private _isReverse: number = 1;
     /**
      * 是否转向 1:默认方向  -1: 从右向左
@@ -30,6 +32,9 @@ export class Bullet extends Component {
         this.bullet.scale = new Vec3(this.bullet.scale.x * -1, this.bullet.scale.y, this.bullet.scale.z);
     }
 
+    /**
+     * 使子弹朝向目标
+     */
     lookAt() {
         if (this.target && this.target.isAlive) {
             let direction = this.bullet.worldPosition.subtract(this.target.model.worldPosition);
@@ -38,6 +43,13 @@ export class Bullet extends Component {
         }
     }
 
+    /**
+     * 发射子弹
+     * @param target 目标
+     * @param duration 持续时间
+     * @param isReverse 是否转向
+     * @param callback 完成回调
+     */
     fire(target: Mediator, duration: number, isReverse: number, callback: () => void) {
         this.isReverse = isReverse;
         this.target = target;
@@ -55,10 +67,4 @@ export class Bullet extends Component {
             })
             .start();
     }
-
-    start() {
-
-    }
 }
-
-

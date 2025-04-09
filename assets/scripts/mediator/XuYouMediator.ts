@@ -11,13 +11,6 @@ export class XuYouMediator extends ShootingMediator {
     onLoad() {
         // this.actor = new Actor(LazyFishId.XuYou);
     }
-
-    loadingActor(actor: Actor): void {
-        super.loadingActor(actor);
-        const resPool = director.getScene().getChildByName("Canvas").getComponent(ResPool);
-        resPool.loadWindMagicSkill();
-    }
-
     start(): void {
 
     }

@@ -1,198 +1,125 @@
-import { _decorator, Component, instantiate, Node, NodePool, Prefab, resources } from 'cc';
+import { instantiate, Node, NodePool, Prefab } from 'cc';
+import { ResourceLoader } from './ResourceLoader';
 import { RES_URL } from './Constants';
-const { ccclass, property } = _decorator;
 
-@ccclass('ResPool')
-export class ResPool extends Component {
+export enum PoolType {
+    DAMAGE = 'damage',
+    BUFF = 'buff',
+    EXPLOSION = 'explosion',
+    CLICK_BULLET = 'clickBullet',
+    WIND_MAGIC = 'windMagic',
+    BLADE_WIND_1 = 'bladeWind1',
+    BLADE_WIND_2 = 'bladeWind2'
+}
 
-    private _poolDict = {};
-    public get poolDict() {
-        return this._poolDict;
-    }
-    public set poolDict(value) {
-        this._poolDict = value;
-    }
+export type ResourceConfig = {
+    type: PoolType;
+    path: string;
+    preload?: boolean;
+    capacity?: number;
+}
 
-    private _damagePrefab: Prefab;
-    public get damagePrefab(): Prefab {
-        return this._damagePrefab;
-    }
-    public set damagePrefab(value: Prefab) {
-        this._damagePrefab = value;
-    }
+export class ResPool {
+    private static _instance: ResPool;
+    private _poolMap = new Map<PoolType, NodePool>();
+    private _prefabMap = new Map<PoolType, Prefab>();
+    private _loadingMap = new Map<PoolType, Promise<void>>();
 
-    private _buffPrefab: Prefab;
-    public get buffPrefab(): Prefab {
-        return this._buffPrefab;
-    }
-    public set buffPrefab(value: Prefab) {
-        this._buffPrefab = value;
-    }
+    private _resourceConfigs: ResourceConfig[] = [
+        { type: PoolType.DAMAGE, path: RES_URL.damage, preload: true, capacity: 20 },
+        { type: PoolType.BUFF, path: RES_URL.buff, preload: true, capacity: 15 },
+        { type: PoolType.EXPLOSION, path: RES_URL.explosion, preload: true, capacity: 10 },
+        { type: PoolType.CLICK_BULLET, path: RES_URL.clickBullet, preload: true, capacity: 10 },
+        { type: PoolType.WIND_MAGIC, path: RES_URL.windMagic, capacity: 3 },
+        { type: PoolType.BLADE_WIND_1, path: RES_URL.bladeWind1, capacity: 2 },
+        { type: PoolType.BLADE_WIND_2, path: RES_URL.bladeWind2, capacity: 2 }
+    ];
 
-    private _explosionPrefab: Prefab;
-    public get explosionPrefab(): Prefab {
-        return this._explosionPrefab;
-    }
-    public set explosionPrefab(value: Prefab) {
-        this._explosionPrefab = value;
-    }
-
-    private _clickBulletPrefab: Prefab;
-    public get clickBulletPrefab(): Prefab {
-        return this._clickBulletPrefab;
-    }
-    public set clickBulletPrefab(value: Prefab) {
-        this._clickBulletPrefab = value;
+    private constructor() {
+        this.initializePools();
     }
 
-    private _windMagicPrefab: Prefab;
-    public get windMagicPrefab(): Prefab {
-        return this._windMagicPrefab;
-    }
-    public set windMagicPrefab(value: Prefab) {
-        this._windMagicPrefab = value;
+    public static get Instance() {
+        return this._instance || (this._instance = new this());
     }
 
-    private _bladeWindPrefab1: Prefab;
-    public get bladeWindPrefab1(): Prefab {
-        return this._bladeWindPrefab1;
-    }
-    public set bladeWindPrefab1(value: Prefab) {
-        this._bladeWindPrefab1 = value;
-    }
-
-    private _bladeWindPrefab2: Prefab;
-    public get bladeWindPrefab2(): Prefab {
-        return this._bladeWindPrefab2;
-    }
-    public set bladeWindPrefab2(value: Prefab) {
-        this._bladeWindPrefab2 = value;
-    }
-
-    start() {
-        resources.load(RES_URL.damage, Prefab, (error, prefab) => {
-            if (prefab) {
-                this.damagePrefab = prefab;
+    private initializePools() {
+        this._resourceConfigs.forEach(config => {
+            if (config.capacity) {
+                const pool = new NodePool();
+                for (let i = 0; i < config.capacity; i++) {
+                    pool.put(new Node());
+                }
+                this._poolMap.set(config.type, pool);
             }
-        })
-
-        resources.load(RES_URL.buff, Prefab, (error, prefab) => {
-            if (prefab) {
-                this.buffPrefab = prefab;
-            }
-        })
-
-        resources.load(RES_URL.explosion, Prefab, (error, prefab) => {
-            if (prefab) {
-                this.explosionPrefab = prefab;
-            }
-        })
-
-        resources.load(RES_URL.clickBullet, Prefab, (error, prefab) => {
-            if (prefab) {
-                this.clickBulletPrefab = prefab;
-            }
-        })
+        });
     }
 
-    loadWindMagicSkill(){
-        resources.load(RES_URL.windMagic, Prefab, (error, prefab) => {
-            if (prefab) {
-                this.windMagicPrefab = prefab;
-            }
-        })
+    public async initialize(preloadAll = false) {
+        const loadTasks = this._resourceConfigs
+            .filter(c => c.preload || preloadAll)
+            .map(c => this.loadResource(c.type));
+
+        await Promise.all(loadTasks);
     }
 
-    loadBladeWindSkill(){
-        resources.load(RES_URL.bladeWind1, Prefab, (error, prefab) => {
-            if (prefab) {
-                this.bladeWindPrefab1 = prefab;
-            }
-        })
-
-        resources.load(RES_URL.bladeWind2, Prefab, (error, prefab) => {
-            if (prefab) {
-                this.bladeWindPrefab2 = prefab;
-            }
-        })
-    }
-
-    getBladeWindNode(type:number){
-        if(type == 0){
-            return this.getNode(this.bladeWindPrefab1);
-        }else if(type==1){
-            return this.getNode(this.bladeWindPrefab2);
-        }
-    }
-
-    getWindMagicNode(){
-        if(this.windMagicPrefab){
-            return this.getNode(this.windMagicPrefab);
-        }
-    }
-
-    getDamageNode() {
-        if(this.damagePrefab){
-            return this.getNode(this.damagePrefab);
-        }
-    }
-
-    getBuffNode() {
-        if(this.buffPrefab){
-            return this.getNode(this.buffPrefab);
-        }
-    }
-
-    getExplosionNode() {
-        if(this.explosionPrefab){
-            return this.getNode(this.explosionPrefab);
-        }
-    }
-
-    getClickBulletNode() {
-        if(this.clickBulletPrefab){
-            return this.getNode(this.clickBulletPrefab);
-        }
-    }
-
-    getNode(prefab: Prefab) {
-        const name = prefab.name;
-        let node: Node;
-        if (this.poolDict.hasOwnProperty(name)) {
-            const pool = this.poolDict[name] as NodePool;
-            if (pool.size() > 0) {
-                node = pool.get();
-            } else {
-                node = instantiate(prefab);
-            }
-        } else {
-            const pool = new NodePool();
-            this.poolDict[name] = pool;
-
-            node = instantiate(prefab);
+    private async loadResource(type: PoolType): Promise<void> {
+        if (this._loadingMap.has(type)) {
+            return this._loadingMap.get(type)!;
         }
 
-        return node;
+        const config = this._resourceConfigs.find(c => c.type === type);
+        if (!config) throw new Error(`Invalid resource type: ${type}`);
+
+        const loadPromise = (async () => {
+            try {
+                const prefab = await ResourceLoader.loadResAsync<Prefab>(config.path);
+                this._prefabMap.set(type, prefab);
+
+                // 预热对象池
+                if (config.capacity) {
+                    const pool = new NodePool();
+                    for (let i = 0; i < config.capacity; i++) {
+                        console.log("prefab name is", prefab.name);
+                        pool.put(instantiate(prefab));
+                    }
+                    this._poolMap.set(type, pool);
+                }
+            } catch (error) {
+                console.error(`Load resource failed: ${type}`, error);
+                throw error;
+            } finally {
+                this._loadingMap.delete(type);
+            }
+        })();
+
+        this._loadingMap.set(type, loadPromise);
+        return loadPromise;
     }
 
-    putNode(node: Node) {
-        const name = node.name;
-        let pool: NodePool;
-
-        if (this.poolDict.hasOwnProperty(name)) {
-            pool = this.poolDict[name] as NodePool;
-        } else {
-            pool = new NodePool;
-            this.poolDict[name] = pool;
+    public async getNode(type: PoolType): Promise<Node> {
+        if (!this._prefabMap.has(type)) {
+            await this.loadResource(type);
         }
+
+        const pool = this._poolMap.get(type) || new NodePool();
+        const prefab = this._prefabMap.get(type)!;
+
+        return pool.size() > 0 ? pool.get() : instantiate(prefab);
+    }
+
+    public putNode(type: PoolType, node: Node) {
+        const pool = this._poolMap.get(type) || new NodePool();
+        node.removeFromParent();
         pool.put(node);
+        this._poolMap.set(type, pool);
     }
 
-    clearPool(name: string) {
-        if(this.poolDict.hasOwnProperty(name)){
-            this.poolDict[name].clear();
+    public clearPool(type?: PoolType) {
+        if (type) {
+            this._poolMap.get(type)?.clear();
+        } else {
+            this._poolMap.forEach(pool => pool.clear());
         }
     }
 }
-
-

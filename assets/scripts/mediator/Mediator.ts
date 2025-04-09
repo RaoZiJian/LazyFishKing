@@ -165,15 +165,6 @@ export class Mediator extends Component {
     protected initRage() {
         this.setRage(this.actor.rage);
     }
-
-    start() {
-
-    }
-
-    update(deltaTime: number) {
-
-    }
-
     loadingActor(actor: Actor) {
         if(actor && actor.id && actor.cfg){
             this.actor = actor;

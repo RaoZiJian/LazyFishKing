@@ -1,10 +1,10 @@
 import { BuffNode } from "../BuffNode";
 import { Bullet } from "../Bullets/Bullet";
 import { DeadCommand, HurtCommand } from "../Command/Command";
-import { Constants, RES_URL } from "../Constants";
+import { Constants } from "../Constants";
 import GameTsCfg from "../data/client/GameTsCfg";
 import { Mediator } from "../mediator/Mediator";
-import { ResPool } from "../ResPool";
+import { PoolType, ResPool } from "../ResPool";
 import { States } from "../stateMachine/StateMachine";
 import { Utils } from "../Utils";
 import { Buff } from "./Buff";
@@ -51,14 +51,6 @@ export abstract class MainSkill {
         this._targets = value;
     }
 
-    private _resPool: ResPool;
-    public get resPool(): ResPool {
-        return this._resPool;
-    }
-    public set resPool(value: ResPool) {
-        this._resPool = value;
-    }
-
     private _canvas: Node;
     public get canvas(): Node {
         return this._canvas;
@@ -72,7 +64,6 @@ export abstract class MainSkill {
         this.caster = caster;
         this.targets = targets;
         this.canvas = director.getScene().getChildByName("Canvas");
-        this.resPool = this.canvas.getComponent(ResPool);
 
         if (GameTsCfg.MainSkill[this.skillId]) {
             this.cfg = GameTsCfg.MainSkill[this.skillId];
@@ -81,7 +72,7 @@ export abstract class MainSkill {
 
 
     abstract getMoveTarget(): Mediator;
-
+    abstract preloadRes(): Promise<void>;
     abstract cast();
 }
 
@@ -97,11 +88,22 @@ export class SingleTauntSkill extends MainSkill {
         this._animation = value;
     }
 
+    private _buffNode: Node;
+    public get buffNode(): Node {
+        return this._buffNode;
+    }
+    public set buffNode(value: Node) {
+        this._buffNode = value;
+    }
     constructor(id: number, caster: Mediator, targets: Mediator[]) {
         super(id, caster, targets);
         this.animation = this.caster.model.getComponent(Animation);
         const tauntAnimation = this.animation.clips.filter(clip => clip.name == this.TAUNT_ANIMATION_NAME);
         this.duration = tauntAnimation[0].duration + this.TAUNT_DISPLAY_TIME;
+    }
+
+    async preloadRes(): Promise<void> {
+        this.buffNode = await ResPool.Instance.getNode(PoolType.BUFF);
     }
 
     cast() {
@@ -116,15 +118,14 @@ export class SingleTauntSkill extends MainSkill {
             this.caster.audio.playOneShot(this.caster.buffAudios.get(buff.id));
         }
 
-        const buffNode = this.resPool.getBuffNode();
 
-        if (buffNode) {
-            const buffComponent = buffNode.getComponent(BuffNode);
+        if (this.buffNode) {
+            const buffComponent = this.buffNode.getComponent(BuffNode);
             buffComponent.label.string = "嘲讽 + " + tauntValue;
-            this.caster.node.addChild(buffNode);
+            this.caster.node.addChild(this.buffNode);
             this.caster.scheduleOnce(() => {
-                this.resPool.putNode(buffNode);
-                buffNode.removeFromParent();
+                ResPool.Instance.putNode(PoolType.BUFF, this.buffNode);
+                this.buffNode.removeFromParent();
             }, this.duration)
         }
 
@@ -171,6 +172,9 @@ export class JumpAttackSkill extends MainSkill {
 
         this.duration = this._jumpStartDuration + this._jumpLoopDuration + this._attackingDuration;
         this.defender = this.getMoveTarget();
+    }
+
+    async preloadRes(): Promise<void> {
     }
 
     getMoveTarget(): Mediator {
@@ -240,11 +244,23 @@ export class HealingGroupSkill extends MainSkill {
         this._animation = value;
     }
 
+    private _buffNode: Node;
+    public get buffNode(): Node {
+        return this._buffNode;
+    }
+    public set buffNode(value: Node) {
+        this._buffNode = value;
+    }
+
     constructor(id: number, caster: Mediator, targets: Mediator[]) {
         super(id, caster, targets);
         this.animation = this.caster.model.getComponent(Animation);
         const animation = this.animation.clips.filter(clip => clip.name == this.HEALING_ANIMATION_NAME);
         this.duration = animation[0].duration + this.HEALING_BUFF_DISPLAY_TIME;
+    }
+
+    async preloadRes(): Promise<void> {
+        this.buffNode = await ResPool.Instance.getNode(PoolType.BUFF);
     }
 
     cast() {
@@ -258,16 +274,14 @@ export class HealingGroupSkill extends MainSkill {
             this.caster.audio.playOneShot(this.caster.buffAudios.get(buff.id));
         }
 
-        const resPool = this.resPool.getComponent(ResPool);
-        this.targets.forEach(target => {
-            const buffNode = resPool.getBuffNode();
-            if (buffNode) {
-                const buffComponent = buffNode.getComponent(BuffNode);
+        this.targets.forEach(async target => {
+            if (this.buffNode) {
+                const buffComponent = this.buffNode.getComponent(BuffNode);
                 buffComponent.label.string = "HP + " + healingValue;
-                target.node.addChild(buffNode);
+                target.node.addChild(this.buffNode);
                 target.scheduleOnce(() => {
-                    resPool.putNode(buffNode);
-                    buffNode.removeFromParent();
+                    ResPool.Instance.putNode(PoolType.BUFF, this.buffNode);
+                    this.buffNode.removeFromParent();
                 }, this.duration)
             }
         });
@@ -288,6 +302,7 @@ export class WindMagicSkill extends MainSkill {
     private WIND_AUDIO = "wind"
 
     private _castBeginDuration: number = 0;
+    private _targetCount: number = 3;
     public get castBeginDuration(): number {
         return this._castBeginDuration;
     }
@@ -319,16 +334,26 @@ export class WindMagicSkill extends MainSkill {
         this._animation = value;
     }
 
+    private _windMagicNodes: Node[] = [];
+    public get windMagicNodes(): Node[] {
+        return this._windMagicNodes;
+    }
     constructor(id: number, caster: Mediator, targets: Mediator[]) {
         let realTargets = Utils.getAliveActors(targets);
         super(id, caster, realTargets);
         this.animation = this.caster.model.getComponent(Animation);
         this.castBeginDuration = this.animation.clips.filter(clip => clip.name == this.CAST_BEGIN)[0].duration;
         this.castEndDuration = this.animation.clips.filter(clip => clip.name == this.CAST_END)[0].duration;
-        const windMagicNode = this.resPool.getWindMagicNode();
-        this.windMagicDuration = windMagicNode.getComponent(Animation).defaultClip.duration;
 
         this.duration = this.castBeginDuration + this.windMagicDuration + this.castEndDuration;
+    }
+
+    async preloadRes(): Promise<void> {
+        for (let i = 0; i < this._targetCount; i++) {
+            const windNode = await ResPool.Instance.getNode(PoolType.WIND_MAGIC)
+            this.windMagicNodes.push(windNode);
+        }
+        this.windMagicDuration = this.windMagicNodes[0].getComponent(Animation).defaultClip.duration;
     }
 
     getMoveTarget(): Mediator {
@@ -341,14 +366,14 @@ export class WindMagicSkill extends MainSkill {
 
     cast() {
         if (this.caster && this.caster.isAlive) {
-            const realTargets = Utils.getRandomActors(Utils.getAliveActors(this.targets), 3);
+            const realTargets = Utils.getRandomActors(Utils.getAliveActors(this.targets), this._targetCount);
             if (realTargets && realTargets.length > 0) {
                 this.animation.play(this.CAST_BEGIN);
                 this.caster.audio.playOneShot(this.caster.skillAudioMap.get(this.WIND_AUDIO));
                 let totalDamage = 0;
                 this.caster.scheduleOnce(() => {
                     realTargets.forEach(target => {
-                        const windMagicNode = this.resPool.getWindMagicNode();
+                        const windMagicNode = this.windMagicNodes.pop();
                         this.canvas.getChildByName("EffectLayer").addChild(windMagicNode);
                         windMagicNode.worldPosition = target.node.worldPosition;
                         const windMagicAnimation = windMagicNode.getComponent(Animation);
@@ -371,7 +396,7 @@ export class WindMagicSkill extends MainSkill {
                         totalDamage += damage;
                         windMagicAnimation.scheduleOnce(() => {
                             windMagicNode.removeFromParent();
-                            this.resPool.putNode(windMagicNode);
+                            ResPool.Instance.putNode(PoolType.WIND_MAGIC, windMagicNode);
                         }, this.windMagicDuration)
                     })
                 }, this.castBeginDuration)
@@ -397,16 +422,19 @@ export class BladeWindSkill extends MainSkill {
     private BLADE_SLASHING_AUDIO = "bladeSlashing"
 
     private SLASHING = "slashing"
-
+    private _targetCount: number = 2;
     private _animation: Animation;
+    private bladeWind1Node: Node;
+    private bladeWind2Node: Node;
+    private _slashingDuration: number;
+    private _bladeWindDuration: number;
+
     public get animation(): Animation {
         return this._animation;
     }
     public set animation(value: Animation) {
         this._animation = value;
     }
-
-    private _slashingDuration: number;
     public get slashingDuration(): number {
         return this._slashingDuration;
     }
@@ -414,25 +442,35 @@ export class BladeWindSkill extends MainSkill {
         this._slashingDuration = value;
     }
 
-    private _bladeWindDuration: number;
     public get bladeWindDuration(): number {
         return this._bladeWindDuration;
     }
     public set bladeWindDuration(value: number) {
         this._bladeWindDuration = value;
     }
-
+    public get bladeWind1(): Node {
+        return this.bladeWind1Node;
+    }
+    public get bladeWind2(): Node {
+        return this.bladeWind2Node;
+    }
     constructor(id: number, caster: Mediator, targets: Mediator[]) {
         const realTargets = Utils.getRandomActors(Utils.getAliveActors(targets), 2);
         super(id, caster, realTargets);
 
         this.animation = this.caster.model.getComponent(Animation);
         this.slashingDuration = this.animation.clips.filter(clip => clip.name == this.SLASHING)[0].duration;
-        const bladeWind1 = this.resPool.getBladeWindNode(0).getComponent(Bullet);
-        const bladeWind2 = this.resPool.getBladeWindNode(1).getComponent(Bullet);
+
+    }
+    async preloadRes(): Promise<void> {
+        this.bladeWind1Node = await ResPool.Instance.getNode(PoolType.BLADE_WIND_1)
+        this.bladeWind2Node = await ResPool.Instance.getNode(PoolType.BLADE_WIND_2)
+        const bladeWind1 = this.bladeWind1Node.getComponent(Bullet);
+        const bladeWind2 = this.bladeWind2Node.getComponent(Bullet);
         this.bladeWindDuration = Math.max(bladeWind1.bullet.getComponent(Animation).defaultClip.duration, bladeWind2.bullet.getComponent(Animation).defaultClip.duration);
         this.duration = this.slashingDuration + Constants.bladeWindFlyDuration + this.bladeWindDuration;
     }
+
 
     getMoveTarget(): Mediator {
         return this.targets[0];
@@ -446,7 +484,7 @@ export class BladeWindSkill extends MainSkill {
         if (this.caster && this.caster.isAlive) {
             const aliveTargets = Utils.getAliveActors(this.targets);
             if (aliveTargets && aliveTargets.length < 2) {
-                this.targets = Utils.getRandomActors(Utils.getAliveActors(this.targets), 2);
+                this.targets = Utils.getRandomActors(Utils.getAliveActors(this.targets), this._targetCount);
             }
             if (this.targets && this.targets.length > 0) {
                 this.targets = this.targets;
@@ -456,7 +494,7 @@ export class BladeWindSkill extends MainSkill {
                 this.caster.scheduleOnce(() => {
                     for (let i = 0; i < this.targets.length; i++) {
                         const target = this.targets[i];
-                        const bladeWind = this.resPool.getBladeWindNode(i);
+                        const bladeWind = i == 0 ? this.bladeWind1 : this.bladeWind2;
                         this.canvas.getChildByName("EffectLayer").addChild(bladeWind);
                         bladeWind.worldPosition = this.caster.model.worldPosition;
                         const bladeBullet = bladeWind.getComponent(Bullet);
@@ -473,7 +511,7 @@ export class BladeWindSkill extends MainSkill {
                                 bladeBullet.scheduleOnce(() => {
                                     bladeBullet.bullet.scale = new Vec3(0.5, 0.5, 0.5);
                                     bladeWind.removeFromParent();
-                                    this.resPool.putNode(bladeWind);
+                                    ResPool.Instance.putNode(i == 0 ? PoolType.BLADE_WIND_1 : PoolType.BLADE_WIND_2, bladeWind);
                                 }, this.bladeWindDuration)
                                 if (!isDead) {
                                     const hurtCommand = new HurtCommand(target, damage);
