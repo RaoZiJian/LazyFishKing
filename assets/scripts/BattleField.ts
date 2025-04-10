@@ -30,6 +30,9 @@ export class BattleField extends Component {
     @property({ type: UIOpacity, tooltip: "Loading节点" })
     loadingOpacity: UIOpacity;
 
+    @property({ type: Label, tooltip: "加载进度" })
+    preloadProgress: Label;
+
     private _leftFishes: Mediator[] = [];
     private _currentStage = 1;
     private _rightFishes: Mediator[] = [];
@@ -70,13 +73,23 @@ export class BattleField extends Component {
      */
     async start() {
         this.showLoading(true);
-        await AccountInfo.requestAccountInfo();
-        await this.preloadPrefabs();
-        await this.initMyFishes();
-        await this.initEnemyFishes()
-        await ResPool.Instance.initialize(true);
-        this.showLoading(false);
+        await Promise.all([
+            AccountInfo.requestAccountInfo(),
+            ResPool.Instance.initialize(true),
+            // 带进度回调的预制体预加载
+            this.preloadPrefabs(progress => {
+                this.scheduleOnce(() => { 
+                    this.preloadProgress.string = `资源预加载进度：${progress.percent}%`;
+                });
+            })
+        ]);
+        this.preloadProgress.string = "";
+        await Promise.all([
+            this.initMyFishes(),
+            this.initEnemyFishes()
+        ]);
 
+        this.showLoading(false);
         this.stageLabel.getComponent(UIOpacity).opacity = 0;
         this.stageLabel.string = "第" + this.currentStage + "关";
         this.stageLabel.getComponent(UIOpacity).opacity = 255;
@@ -91,15 +104,25 @@ export class BattleField extends Component {
      * 异步预加载所有武将的prefab资源
      * 此函数的目的是在游戏开始之前加载所有必要的武将模型，以提高游戏运行时的性能
      */
-    async preloadPrefabs() {
-        // 获取武将配置的总数
-        const actorLength = Object.keys(GameTsCfg.Actor).length;
-        for (let i = 0; i < actorLength; i++) {
-            let key = Object.keys(GameTsCfg.Actor)[i];
-            let prefab = GameTsCfg.Actor[key].prefab;
-            // 预加载单个prefab资源，参数1表示只预加载一个实例
-            await FishNodePool.preloadSingle(prefab, 1);
-        }
+    async preloadPrefabs(
+        onProgress?: (progress: { percent: number; loaded: number; total: number }) => void
+    ) {
+        const actorKeys = Object.keys(GameTsCfg.Actor);
+        const total = actorKeys.length;
+        let loaded = 0;
+        const loadPromises = actorKeys.map(key => {
+            const prefab = GameTsCfg.Actor[key].prefab;
+            return FishNodePool.preloadSingle(prefab, 1)
+                .then(() => {
+                    loaded++;
+                    onProgress?.({
+                        percent: Math.round((loaded / total) * 100),
+                        loaded,
+                        total
+                    });
+                });
+        });
+        await Promise.all(loadPromises);
     }
 
     /**
@@ -121,7 +144,7 @@ export class BattleField extends Component {
                     this.node.addChild(fishNode);
                     fishNode.setPosition(this.LeftFishAreas[i].position);
                     const mediator = fishNode.getComponent(Mediator);
-                    mediator.loadingActor(actor);
+                    await mediator.loadingActor(actor);
                     this.leftFishes.push(mediator);
                 }
             }
@@ -335,7 +358,7 @@ export class BattleField extends Component {
 
         //执行战斗命令
         if (headCommand) {
-           await headCommand.execute();
+            await headCommand.execute();
         }
     }
     /**

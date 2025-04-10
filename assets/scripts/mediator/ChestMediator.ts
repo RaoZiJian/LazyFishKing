@@ -26,7 +26,7 @@ export class ChestMediator extends Mediator {
         
     }
 
-    loadingActor(actor: Actor): void {
+    async loadingActor(actor: Actor): Promise<void> {
         if(actor && actor.id && actor.cfg){
             this.actor = actor;
             this.playIdle();

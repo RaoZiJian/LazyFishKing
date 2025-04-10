@@ -26,9 +26,9 @@ export class ResPool {
     private _loadingMap = new Map<PoolType, Promise<void>>();
 
     private _resourceConfigs: ResourceConfig[] = [
-        { type: PoolType.DAMAGE, path: RES_URL.damage, preload: true, capacity: 20 },
-        { type: PoolType.BUFF, path: RES_URL.buff, preload: true, capacity: 15 },
-        { type: PoolType.EXPLOSION, path: RES_URL.explosion, preload: true, capacity: 10 },
+        { type: PoolType.DAMAGE, path: RES_URL.damage, preload: true, capacity: 5 },
+        { type: PoolType.BUFF, path: RES_URL.buff, preload: true, capacity: 5 },
+        { type: PoolType.EXPLOSION, path: RES_URL.explosion, preload: true, capacity: 5 },
         { type: PoolType.CLICK_BULLET, path: RES_URL.clickBullet, preload: true, capacity: 10 },
         { type: PoolType.WIND_MAGIC, path: RES_URL.windMagic, capacity: 3 },
         { type: PoolType.BLADE_WIND_1, path: RES_URL.bladeWind1, capacity: 2 },

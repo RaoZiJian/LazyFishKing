@@ -13,75 +13,43 @@ import { AttackType } from "../Actor/Actor";
 import { ChestMediator } from "../mediator/ChestMediator";
 import { AccountInfo } from "../AccountInfo";
 
-export class CommandScheduler {
-    private current: Command | null = null;
-    // 启动执行链
-    async start(head: Command): Promise<void> {
-        this.current = head;
-        while (this.current) {
-            try {
-                await this.current.execute();
-                this.current = this.current.nextCommand;
-            } catch (err) {
-                console.error("指令执行失败:", err);
-                this.current = null; // 中断执行
-                break;
-            }
-        }
-    }
-}
-
-
 export abstract class Command {
 
-    private _isFinished: boolean = false;
-    private _duration: number;
-    private _nextCommand: Command;
+    /**
+     * 是否执行完成
+     */
+    isFinished: boolean = false;
+
+    /**
+     * 持续时间
+     */
+    duration: number;
+
+    /**
+     * 下一个命令节点
+     */
+    nextCommand: Command;
+
+    /**
+     * 执行命令
+     */
     abstract execute(): Promise<void>;
 
+    /**
+     * 命令完成放大，调用下一个命令
+     */
     async complete(): Promise<void> {
         this.isFinished = true;
         if (this.nextCommand) {
             await this.nextCommand.execute();
         }
     }
-    public get isFinished(): boolean {
-        return this._isFinished;
-    }
-    public set isFinished(value: boolean) {
-        this._isFinished = value;
-    }
 
-    /**
-     * 命令的持续时间
-     */
-    public get duration(): number {
-        return this._duration;
-    }
-    public set duration(value: number) {
-        this._duration = value;
-    }
-    /**
-     * 下一个命令
-     */
-    public get nextCommand(): Command {
-        return this._nextCommand;
-    }
-    public set nextCommand(value: Command) {
-        this._nextCommand = value;
-    }
 }
 
 export class EndTurnCommand extends Command {
 
-    private _callback: () => void;
-    public get callback(): () => void {
-        return this._callback;
-    }
-    public set callback(value: () => void) {
-        this._callback = value;
-    }
-
+    callback: () => void;
     constructor(e: () => void) {
         super();
         this.callback = e;
@@ -95,40 +63,20 @@ export class EndTurnCommand extends Command {
 }
 
 export class MoveCommand extends Command {
-
-    private _target: Mediator;
     /**
      * 移动人物
      */
-    public get target(): Mediator {
-        return this._target;
-    }
-    public set target(value: Mediator) {
-        this._target = value;
-    }
+    target: Mediator;
 
-    private _targetPos: Vec3;
     /**
      * 目标坐标，世界坐标
      */
-    public get targetPos(): Vec3 {
-        return this._targetPos;
-    }
-    public set targetPos(value: Vec3) {
-        this._targetPos = value;
-    }
+    targetPos: Vec3;
 
-    private _time: number;
     /**
      * 移动完成的时间
      */
-    public get time(): number {
-        return this._time;
-    }
-    public set time(value: number) {
-        this._time = value;
-    }
-
+    time: number;
     constructor(target: Mediator, targetPos: Vec3, time: number) {
         super();
         this.target = target;
@@ -151,40 +99,9 @@ export class MoveCommand extends Command {
 
 export class AttackCommand extends Command {
 
-    private _attacker: Mediator;
-    private _defender: Mediator;
-
-    /**
-     * 进攻方
-     */
-    public get attacker(): Mediator {
-        return this._attacker;
-    }
-    public set attacker(value: Mediator) {
-        this._attacker = value;
-    }
-
-    /**
-     * 防御方
-     */
-    public get defender(): Mediator {
-        return this._defender;
-    }
-    public set defender(value: Mediator) {
-        this._defender = value;
-    }
-
-    private _damage: number;
-    /**
-     * 伤害，如果不传则使用默认公式计算伤害
-     */
-    public get damage(): number {
-        return this._damage;
-    }
-    public set damage(value: number) {
-        this._damage = value;
-    }
-
+    attacker: Mediator;
+    defender: Mediator;
+    damage: number;
     constructor(attacker: Mediator, denfender: Mediator, damage?: number) {
         super();
         this.attacker = attacker;
@@ -224,28 +141,8 @@ export class AttackCommand extends Command {
 
 export class HurtCommand extends Command {
 
-    private _target: Mediator;
-    private _damage: number;
-    /**
-     * 受击对象
-     */
-    public get target(): Mediator {
-        return this._target;
-    }
-    public set target(value: Mediator) {
-        this._target = value;
-    }
-
-    /**
-     * 伤害
-     */
-    public get damage(): number {
-        return this._damage;
-    }
-    public set damage(value: number) {
-        this._damage = value;
-    }
-
+    target: Mediator;
+    damage: number;
     constructor(target: Mediator, damage: number) {
         super();
         this.target = target;
@@ -280,17 +177,7 @@ export class HurtCommand extends Command {
 
 export class DeadCommand extends Command {
 
-    private _target: Mediator;
-    /**
-     * 死亡目标
-     */
-    public get target(): Mediator {
-        return this._target;
-    }
-    public set target(value: Mediator) {
-        this._target = value;
-    }
-
+   target: Mediator;
     constructor(target: Mediator) {
         super();
         this.target = target;
@@ -337,23 +224,8 @@ export class DeadCommand extends Command {
 
 export class ShootingCommand extends Command {
 
-    private _attacker: Mediator;
-    public get attacker(): Mediator {
-        return this._attacker;
-    }
-    public set attacker(value: Mediator) {
-        this._attacker = value;
-    }
-
-    private _defender: Mediator;
-    public get defender(): Mediator {
-        return this._defender;
-    }
-    public set defender(value: Mediator) {
-        this._defender = value;
-    }
-
-
+    attacker: Mediator;
+    defender: Mediator;
     constructor(attacker: Mediator, defender: Mediator) {
         super();
         this.attacker = attacker;
@@ -373,37 +245,10 @@ export class ShootingCommand extends Command {
 
 export class BulletFireCommnad extends Command {
 
-    private _bullet: Node;
-    public get bullet(): Node {
-        return this._bullet;
-    }
-    public set bullet(value: Node) {
-        this._bullet = value;
-    }
-
-    private _attacker: Mediator;
-    public get attacker(): Mediator {
-        return this._attacker;
-    }
-    public set attacker(value: Mediator) {
-        this._attacker = value;
-    }
-
-    private _target: Mediator;
-    public get target(): Mediator {
-        return this._target;
-    }
-    public set target(value: Mediator) {
-        this._target = value;
-    }
-
-    private _damage: number;
-    public get damage(): number {
-        return this._damage;
-    }
-    public set damage(value: number) {
-        this._damage = value;
-    }
+    bullet: Node;
+    attacker: Mediator;
+    target: Mediator;
+    damage: number;
 
     constructor(bullet: Node, attacker: Mediator, target: Mediator, duration: number, damage?: number) {
         super();
@@ -453,27 +298,12 @@ export class BulletFireCommnad extends Command {
 
 export class BulletFireExplosion extends Command {
 
-    private _target: Mediator;
-    public get target(): Mediator {
-        return this._target;
-    }
-    public set target(value: Mediator) {
-        this._target = value;
-    }
-
-    private _explosionNode: Node;
-    public get explosionNode(): Node {
-        return this._explosionNode;
-    }
-    public set explosionNode(value: Node) {
-        this._explosionNode = value;
-    }
-
+    target: Mediator;
+    explosionNode: Node;
     constructor(target: Mediator) {
         super();
         this.target = target;
     }
-
     async execute(): Promise<void> {
         this.explosionNode = await ResPool.Instance.getNode(PoolType.EXPLOSION);
         const animation = this.explosionNode.getComponent(Animation);
@@ -493,45 +323,11 @@ export class BulletFireExplosion extends Command {
 
 export class MainSkillCastCommand extends Command {
 
-    private _caster: Mediator;
-    private _defenders: Mediator[];
-    private _mainSkill: MainSkill;
-    private _skillId: number;
-
-    private _battleField: BattleField;
-    public get battleField(): BattleField {
-        return this._battleField;
-    }
-    public set battleField(value: BattleField) {
-        this._battleField = value;
-    }
-
-    public get skillId(): number {
-        return this._skillId;
-    }
-    public set skillId(value: number) {
-        this._skillId = value;
-    }
-
-    public get caster(): Mediator {
-        return this._caster;
-    }
-    public set caster(value: Mediator) {
-        this._caster = value;
-    }
-    public get defenders(): Mediator[] {
-        return this._defenders;
-    }
-    public set defenders(value: Mediator[]) {
-        this._defenders = value;
-    }
-    public get mainSkill(): MainSkill {
-        return this._mainSkill;
-    }
-    public set mainSkill(value: MainSkill) {
-        this._mainSkill = value;
-    }
-
+    caster: Mediator;
+    defenders: Mediator[];
+    mainSkill: MainSkill;
+    skillId: number;
+    battleField: BattleField;
     constructor(caster: Mediator, denfenders: Mediator[], skillId: number, battleField: BattleField) {
         super();
         this.caster = caster;

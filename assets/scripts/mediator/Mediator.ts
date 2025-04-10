@@ -4,8 +4,8 @@ import { Actor } from '../Actor/Actor';
 import { Constants, RES_URL } from '../Constants';
 import { Buff } from '../Skill/Buff';
 import GameTsCfg from '../data/client/GameTsCfg';
-import { Effect } from '../Skill/Effect';
 import { Utils } from '../Utils';
+import { ResourceLoader } from '../ResourceLoader';
 const { ccclass, property } = _decorator;
 
 @ccclass('Mediator')
@@ -165,15 +165,15 @@ export class Mediator extends Component {
     protected initRage() {
         this.setRage(this.actor.rage);
     }
-    loadingActor(actor: Actor) {
-        if(actor && actor.id && actor.cfg){
+    async loadingActor(actor: Actor) {
+        if (actor && actor.id && actor.cfg) {
             this.actor = actor;
             this.stateMachine = this.getComponentInChildren(StateMachine);
             this.changeState(States.IDLE);
             this.initRage();
-            this.loadAudioRes();
             this.addInitialBuff();
-        }else{
+            await this.loadAudioRes();
+        } else {
             log("actor is wrong");
         }
     }
@@ -200,60 +200,97 @@ export class Mediator extends Component {
         this.isAlive = false;
         this.audio.playOneShot(this.deadAudioClip);
     }
+    protected async loadAudioRes(): Promise<void> {
+        // 一级并行：核心音效与附加音效并行加载
+        const [baseAudios, buffAudios, skillAudios] = await Promise.all([
+            // 核心音效并行加载
+            Promise.all([
+                this.loadHurtAudio(),
+                this.loadDeadAudio()
+            ]),
 
-    protected loadAudioRes() {
-        const hurtAudioURL = RES_URL.audioPrefix + this.actor.cfg.hurtAudio;
-        resources.load(hurtAudioURL, AudioClip, (error, audioClip) => {
-            this.hurtAudioClip = audioClip;
-        });
+            // Buff音效并行加载
+            this.loadBuffAudios(),
 
-        //读取死亡音效
-        const deadAudioURL = RES_URL.audioPrefix + this.actor.cfg.deadAudio;
-        resources.load(deadAudioURL, AudioClip, (error, audioClip) => {
-            this.deadAudioClip = audioClip;
-        });
+            // 技能音效并行加载
+            this.loadSkillAudios()
+        ]);
 
-        //读取buff音效
-        this.buffAudios = new Map();
-        let buffIds: number[] = [];
-
-        const initialBuffId = this.actor.cfg?.buff1;
-        if (initialBuffId != "") {
-            buffIds.push(initialBuffId);
-        }
-
-        let mainSkillId = this.actor.cfg.MainSkill;
-        const skill = GameTsCfg.MainSkill[mainSkillId];
-        if (skill.buffs != "") {
-            let skillBuffs = Utils.parseString(skill.buffs) as number[];
-            skillBuffs.forEach(mainSkillBuffId => {
-                buffIds.push(mainSkillBuffId)
-            });
-        }
-
-        buffIds.forEach(buffId => {
-            const buffCfg = GameTsCfg.Buff[buffId];
-            if (buffCfg.audio) {
-                resources.load(buffCfg.audio, AudioClip, (error, audioClip) => {
-                    if (audioClip) {
-                        this.buffAudios.set(buffId, audioClip);
-                    }
-                });
-            }
-        });
-
-        //读取主技能音效
-        if (skill && skill.audio && skill.audio != "") {
-            let skillAudios = Utils.parseString(skill.audio) as string[];
-            skillAudios.forEach(skillAudioId=>{
-                resources.load(RES_URL.audioPrefix + skillAudioId, AudioClip, (error, audioClip)=>{
-                    if(audioClip){
-                        this.skillAudioMap.set(skillAudioId, audioClip);
-                    }
-                })
-            })
-        }
+        // 资源分配（解构并行加载结果）
+        [this.hurtAudioClip, this.deadAudioClip] = baseAudios;
+        this.buffAudios = new Map(buffAudios);
+        this.skillAudioMap = new Map(skillAudios);
     }
+
+    // 核心音效加载器
+    private async loadHurtAudio(): Promise<AudioClip> {
+        const url = RES_URL.audioPrefix + this.actor.cfg.hurtAudio;
+        return ResourceLoader.loadResAsync<AudioClip>(url);
+    }
+
+    private async loadDeadAudio(): Promise<AudioClip> {
+        const url = RES_URL.audioPrefix + this.actor.cfg.deadAudio;
+        return ResourceLoader.loadResAsync<AudioClip>(url);
+    }
+
+    // Buff音效并行加载器
+    private async loadBuffAudios(): Promise<Array<[number, AudioClip]>> {
+        const buffIds = this.getBuffIds();
+        const loadTasks = buffIds.map(buffId =>
+            new Promise<[number, AudioClip]>(resolve => {
+                const buffCfg = GameTsCfg.Buff[buffId];
+                if (!buffCfg?.audio) return resolve(null);
+
+                resources.load(buffCfg.audio, AudioClip, (err, clip) => {
+                    return err ? resolve(null) : resolve([buffId, clip]);
+                });
+            })
+        );
+
+        const results = await Promise.all(loadTasks);
+        return results.filter(Boolean) as Array<[number, AudioClip]>;
+    }
+
+    // 技能音效并行加载器  
+    private async loadSkillAudios(): Promise<Array<[string, AudioClip]>> {
+        const skill = this.getMainSkill();
+        if (!skill?.audio) return [];
+
+        const audioIds = Utils.parseString(skill.audio) as string[];
+        const loadTasks = audioIds.map(id =>
+            new Promise<[string, AudioClip]>(resolve => {
+                const url = RES_URL.audioPrefix + id;
+                resources.load(url, AudioClip, (err, clip) => {
+                    return err ? resolve(null) : resolve([id, clip]);
+                });
+            })
+        );
+
+        const results = await Promise.all(loadTasks);
+        return results.filter(Boolean) as Array<[string, AudioClip]>;
+    }
+
+    // Buff ID生成逻辑封装
+    private getBuffIds(): number[] {
+        const ids: number[] = [];
+        const initialBuff = this.actor.cfg?.buff1;
+
+        if (initialBuff) ids.push(initialBuff);
+
+        const skill = this.getMainSkill();
+        if (skill?.buffs) {
+            ids.push(...Utils.parseString(skill.buffs) as number[]);
+        }
+
+        return [...new Set(ids)]; // 去重处理
+    }
+
+    // 主技能获取封装
+    private getMainSkill() {
+        const skillId = this.actor.cfg.MainSkill;
+        return GameTsCfg.MainSkill[skillId];
+    }
+
 }
 
 
