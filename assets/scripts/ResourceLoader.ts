@@ -11,7 +11,7 @@ export namespace ResourceLoader {
      * @returns 返回一个Promise对象，解析为加载的资源对象
      *          如果加载失败，Promise会被拒绝并返回错误信息
      */
-    export function loadResAsync<T extends Asset>(path: string): Promise<T> {
+    export async function loadResAsync<T extends Asset>(path: string): Promise<T> {
         return new Promise((resolve, reject) => {
             // 使用resources.load方法加载指定路径的资源
             // 如果加载成功，调用resolve方法解析为加载的资源
@@ -22,6 +22,7 @@ export namespace ResourceLoader {
             });
         });
     }
+
     /**
      * 异步加载多个资源并返回一个映射关系
      * 该函数接收一组资源路径，并异步加载这些路径对应的资源。
@@ -30,7 +31,7 @@ export namespace ResourceLoader {
      * @param paths 资源路径数组，包含需要加载的所有资源的路径
      * @returns 返回一个Map对象，键为资源路径，值为对应的已加载资源对象
      */
-    async function loadResources(paths: string[]): Promise<Map<string, any>> {
+    export async function loadResources(paths: string[]): Promise<Map<string, any>> {
         // 创建一个Promise数组，每个Promise负责加载一个指定路径的资源
         const promises = paths.map(path => loadResAsync(path));
         const assets = await Promise.all(promises);
@@ -38,5 +39,4 @@ export namespace ResourceLoader {
         // 根据路径和对应加载的资源创建一个Map对象，并返回
         return new Map(paths.map((path, i) => [path, assets[i]]));
     }
-
 }

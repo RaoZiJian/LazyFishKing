@@ -2,7 +2,7 @@ import { _decorator, log } from 'cc';
 import { Actor } from './Actor/Actor';
 import { Item } from './Item';
 import { TestAccountId } from './Constants';
-import { postdata } from './Request/HttpRequest';
+import { getData, postdata } from './Request/HttpRequest';
 import GameTsCfg from './data/client/GameTsCfg';
 
 const { ccclass } = _decorator;
@@ -44,25 +44,27 @@ export class AccountInfo {
     }
     // 账户信息请求
     static async requestAccountInfo() {
-        // 定义账户信息，包含账户ID
-        const accountInfo = { accountId: TestAccountId }
         // 异步发送账户信息到服务器，并处理响应数据
-        await postdata('http://localhost:8888/account', accountInfo)
-            .then((data) => {
+        await getData('http://localhost:8888/account?accountId=' + TestAccountId,)
+            .then((response) => {
                 // 日志输出账户信息
-                log("/account: ", data);
-                // 解析并存储演员信息
-                this.parseActor(data.actors);
-                // 解析并存储背包信息
-                this.parseBag(data.bags);
-                // 更新账户等级
-                this.level = data?.level;
-                // 更新账户经验值
-                this.exp = data?.exp;
-                // 更新账户名称
-                this.accountName = data?.name;
-                // 更新账户头像
-                this.avatar = data?.avatar;
+                log("/account: ", response);
+                if (response.success == true) {
+                    const account = response.account;
+                    // 解析并存储演员信息
+                    this.parseActor(account.actors);
+                    // 解析并存储背包信息
+                    this.parseBag(account.bags);
+                    // 更新账户等级
+                    this.level = account?.level;
+                    // 更新账户经验值
+                    this.exp = account?.exp;
+                    // 更新账户名称
+                    this.accountName = account?.name;
+                    // 更新账户头像
+                    this.avatar = account?.avatar;
+                }
+
             }).catch((error) => {
                 // 日志输出错误信息
                 log("/account/ error: ", error);
