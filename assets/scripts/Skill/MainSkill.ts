@@ -218,7 +218,7 @@ export class JumpAttackSkill extends MainSkill {
                                 hurtCommand.execute();
                             }, this._jumpLoopDuration * 0.5)
                         } else {
-                            const deadCommand = new DeadCommand(this.defender);
+                            const deadCommand = new DeadCommand(this.defender, this.caster);
                             this.defender.scheduleOnce(() => {
                                 deadCommand.execute();
                             }, this._jumpLoopDuration * 0.5)
@@ -388,7 +388,7 @@ export class WindMagicSkill extends MainSkill {
                                 hurtCommand.execute();
                             }, this.windMagicDuration * 0.5)
                         } else {
-                            const deadCommand = new DeadCommand(target);
+                            const deadCommand = new DeadCommand(target, this.caster);
                             target.scheduleOnce(() => {
                                 deadCommand.execute();
                             }, this.windMagicDuration * 0.5)
@@ -517,7 +517,7 @@ export class BladeWindSkill extends MainSkill {
                                     const hurtCommand = new HurtCommand(target, damage);
                                     hurtCommand.execute();
                                 } else {
-                                    const deadCommand = new DeadCommand(target);
+                                    const deadCommand = new DeadCommand(target, this.caster);
                                     deadCommand.execute();
                                 }
                             })

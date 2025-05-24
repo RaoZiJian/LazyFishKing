@@ -1,7 +1,7 @@
 import { Node, tween, Vec3, director, Animation } from "cc";
 import { Mediator } from "../mediator/Mediator";
 import { States } from "../stateMachine/StateMachine";
-import { Constants } from "../Constants";
+import { Constants, LazyFishId } from "../Constants";
 import { DamageNode } from "../DamageNode";
 import { MainSkillFactory } from "../Skill/MainSkillFactory";
 import { MainSkill } from "../Skill/MainSkill";
@@ -9,7 +9,7 @@ import { PoolType, ResPool } from "../ResPool";
 import { BattleField } from "../BattleField";
 import { Bullet } from "../Bullets/Bullet";
 import { ShootingMediator } from "../mediator/ShootingMediator";
-import { AttackType } from "../Actor/Actor";
+import { Actor, ActorIdFactory, AttackType } from "../Actor/Actor";
 import { ChestMediator } from "../mediator/ChestMediator";
 import { AccountInfo } from "../AccountInfo";
 
@@ -125,7 +125,7 @@ export class AttackCommand extends Command {
                 hurtCommand.nextCommand = this.nextCommand;
                 this.nextCommand = hurtCommand;
             } else {
-                const deadCommand = new DeadCommand(this.defender);
+                const deadCommand = new DeadCommand(this.defender, this.attacker);
                 deadCommand.nextCommand = this.nextCommand;
                 this.nextCommand = deadCommand;
             }
@@ -177,10 +177,12 @@ export class HurtCommand extends Command {
 
 export class DeadCommand extends Command {
 
-   target: Mediator;
-    constructor(target: Mediator) {
+    target: Mediator;
+    attacker: Mediator;
+    constructor(target: Mediator, attaker?: Mediator) {
         super();
         this.target = target;
+        this.attacker = attaker;
         if (target.actor.cfg.attackType == AttackType.Chest) {
             let mediator = this.target as ChestMediator;
             this.duration = mediator.getDyingDuration();
@@ -192,17 +194,10 @@ export class DeadCommand extends Command {
     async execute(): Promise<void> {
         if (this.target.isAlive) {
             this.target.changeState(States.DYING);
-            const battleField = director.getScene().getChildByName("Canvas").getComponentInChildren(BattleField);
-            let isActorFromLeft = battleField.isActorFromLeft(this.target);
-            if (!isActorFromLeft) {
-                let dropId = this.target.actor.cfg.drop;
-                let dropAmount = this.target.actor.cfg.dropAmount;
-                AccountInfo.requestAddItem(dropId, dropAmount, () => { });
-            }
             const damageNode = await ResPool.Instance.getNode(PoolType.DAMAGE);
             if (damageNode) {
                 this.target.node.addChild(damageNode);
-
+                this.checkDropItem();
                 const damageComponent = damageNode.getComponent(DamageNode);
                 damageComponent.label.string = this.target.getHp().toString();
                 this.target.setHp(0);
@@ -219,6 +214,19 @@ export class DeadCommand extends Command {
         }
 
         this.complete();
+    }
+    checkDropItem() {
+        const battleField = director.getScene().getChildByName("Canvas").getComponentInChildren(BattleField);
+        let isActorFromLeft = battleField.isActorFromLeft(this.target);
+        if (!isActorFromLeft) {
+            let dropId = this.target.actor.cfg.drop;
+            let dropAmount = this.target.actor.cfg.dropAmount;
+            if (this.attacker) {
+                AccountInfo.requestDropEnemyItem(dropId, dropAmount, this.attacker.actor.id, this.attacker.actor.level, () => { });
+            } else {
+                AccountInfo.requestDropEnemyItem(dropId, dropAmount, LazyFishId.MyActor, AccountInfo.level,() => { });
+            }
+        }
     }
 }
 
@@ -282,7 +290,7 @@ export class BulletFireCommnad extends Command {
                     const hurtCommand = new HurtCommand(this.target, this.damage);
                     await hurtCommand.execute();
                 } else {
-                    const deadCommand = new DeadCommand(this.target);
+                    const deadCommand = new DeadCommand(this.target, this.attacker);
                     await deadCommand.execute();
                 }
                 const explosion = new BulletFireExplosion(this.target);

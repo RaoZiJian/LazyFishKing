@@ -1,4 +1,4 @@
-export default {
+module.exports ={
   "Actor": {
     "1": {
       "id": 1,

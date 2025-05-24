@@ -87,7 +87,7 @@ export class AccountRoleItem extends Component {
         this.coins.color = isLevelUpMoneyEnough ? Color.GREEN : Color.RED;
 
         // 更新角色名称、等级、攻击力和升级百分比的显示内容
-        this.roleName.string = AccountInfo.name;
+        this.roleName.string = AccountInfo.accountName;
         this.roleLevel.string = "Lv." + AccountInfo.level.toString();
         this.roleAttack.string = "攻击力:" + AccountInfo.attack;
         const percent = Utils.getLevelUpPercent(AccountInfo.level, AccountInfo.exp)

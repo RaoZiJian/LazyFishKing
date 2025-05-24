@@ -16,8 +16,8 @@ export default {
       "MainSkill": 1,
       "avatar": "fishes/Avatars/crab",
       "buff1": 1,
-      "drop": 13,
-      "dropAmount": 100
+      "drop": 1,
+      "dropAmount": 1
     },
     "2": {
       "id": 2,

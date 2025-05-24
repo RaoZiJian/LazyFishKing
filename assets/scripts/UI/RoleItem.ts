@@ -65,6 +65,7 @@ export class RoleItem extends Component {
             // 如果金币足够，则进行升级操作，并刷新角色项的显示
             if (isLevelUpMoneyEnough) {
                 await AccountInfo.actorLevelUp(this.actor.id, () => {
+                    this.actor = AccountInfo.actors.find(actor => actor.id === this.actor.id);
                     this.refreshItem();
                 })
             }

@@ -4,6 +4,7 @@ import { Item } from './Item';
 import { TestAccountId } from './Constants';
 import { getData, postdata } from './Request/HttpRequest';
 import GameTsCfg from './data/client/GameTsCfg';
+import { Mediator } from './mediator/Mediator';
 
 const { ccclass } = _decorator;
 
@@ -45,12 +46,12 @@ export class AccountInfo {
     // 账户信息请求
     static async requestAccountInfo() {
         // 异步发送账户信息到服务器，并处理响应数据
-        await getData('http://localhost:8888/account?accountId=' + TestAccountId,)
+        await getData('http://localhost:3000/account?accountId=' + TestAccountId,)
             .then((response) => {
                 // 日志输出账户信息
                 log("/account: ", response);
                 if (response.success == true) {
-                    const account = response.account;
+                    const account = response.data;
                     // 解析并存储演员信息
                     this.parseActor(account.actors);
                     // 解析并存储背包信息
@@ -78,25 +79,24 @@ export class AccountInfo {
      * 它通过发送POST请求到指定的URL，来更新账户信息如果请求成功并且数据中包含账户信息，
      * 则会更新当前实例的等级(level)、经验值(exp)、账户名(accountName)和头像(avatar)
      * 
-     * @param level 要更新到的等级
      * @param cb 更新完成后调用的回调函数，用于通知调用者更新操作已完成
      */
-    static async requestUpdateAccountLevel(level: number, cb: () => void) {
+    static async requestUpdateAccountLevel(cb: () => void) {
         // 准备请求数据，包括账户ID和要更新的等级
-        const reqData = { accountId: TestAccountId, level: level };
+        const reqData = { accountId: TestAccountId };
 
         // 发送POST请求到指定URL，请求更新账户等级
-        await postdata('http://localhost:8888/account/updateLevel', reqData)
-            .then((data) => {
+        await postdata('http://localhost:3000/account/updateLevel', reqData)
+            .then((response) => {
                 // 日志记录：服务器响应数据
-                log("/account/updateLevel: ", data);
+                log("/account/updateLevel: ", response);
 
                 // 如果服务器返回的数据中包含账户信息，则更新当前实例的相关属性
-                if (data?.account) {
-                    this.level = data.account.level;
-                    this.exp = data.account.exp;
-                    this.accountName = data.account.name;
-                    this.avatar = data.account.avatar;
+                if (response.success == true) {
+                    const account = response.data;
+                    this.level = account.level;
+                    this.exp = account.exp;
+                    this.parseBag(account.bags)
                 }
 
                 // 调用回调函数，通知调用者更新操作已完成
@@ -122,20 +122,16 @@ export class AccountInfo {
         const reqData = { accountId: TestAccountId, actorId: actorId };
 
         // 发送POST请求以更新演员等级
-        await postdata('http://localhost:8888/account/updateActorLevel', reqData)
-            .then((data) => {
+        await postdata('http://localhost:3000/account/updateActorLevel', reqData)
+            .then((response) => {
                 // 日志记录响应数据
-                log("/actor/updateActorLevel: ", data);
+                log("/actor/updateActorLevel: ", response);
 
                 // 如果响应数据存在且包含账户信息，则处理演员等级和经验更新
-                if (data && data.account) {
-                    for (let i = 0; i < this.actors.length; i++) {
-                        // 当演员ID匹配时，更新演员的等级和经验
-                        if (actorId == this.actors[i].id) {
-                            this.actors[i].level = data.account.actors[i]?.actorLevel;
-                            this.actors[i].exp = data.account.actors[i]?.exp;
-                        }
-                    }
+                if (response.success == true) {
+                    const account = response.data;
+                    this.parseBag(account.bags);
+                    this.parseActor(account.actors);
                 }
 
                 // 如果提供了回调函数，则调用之
@@ -149,27 +145,28 @@ export class AccountInfo {
     }
 
     /**
-     * 异步请求添加项目到账户中
+     * 击倒敌人掉落物品请求
      * 
      * 本函数构造请求数据，调用后端接口以添加项目到指定账户中
      * 在接口调用成功后，还会调用类中的addItem方法来更新客户端的状态
      * 
      * @param itemId 项目ID，用于指定需要添加的项目
      * @param amount 数量，需要添加的项目的数量
+     * @param attackerId 攻击者id
+     * @param attackLevel 攻击者等级
      * @param cb 回调函数，添加操作完成后执行的函数
      */
-    static async requestAddItem(itemId: number, amount: number, cb: () => void) {
-        // 构造请求数据，包括账户ID、项目ID和数量
-        const reqData = { accountId: TestAccountId, itemId: itemId, amount: amount };
+    static async requestDropEnemyItem(itemId: number, amount: number, attackerId: number, attackerLevel: number, cb: () => void) {
+        const reqData = { accountId: TestAccountId, itemId: itemId, amount: amount, attackerId: attackerId, attackerLevel: attackerLevel };
 
         // 发起POST请求到后端接口
-        await postdata('http://localhost:8888/account/addItem', reqData)
-            .then((data) => {
+        await postdata('http://localhost:3000/account/dropEnemyItem', reqData)
+            .then((response) => {
                 // 日志记录接口返回的数据
-                log("/account/addItem: ", data);
+                log("/account/dropEnemyItem: ", response);
 
                 // 如果返回数据中包含account字段，则调用addItem方法更新状态
-                if (data && data.account) {
+                if (response.success == true) {
                     this.addItem(itemId, amount);
                 }
 
@@ -179,7 +176,7 @@ export class AccountInfo {
                 }
             }).catch((error) => {
                 // 日志记录接口调用错误
-                log("/account/addItem error: ", error);
+                log("/account/dropEnemyItem error: ", error);
             });
     }
 
@@ -201,7 +198,7 @@ export class AccountInfo {
                 return null;
             }
             const actor = new Actor(data.actorId);
-            actor.level = data?.actorLevel;
+            actor.level = data?.level;
             actor.exp = data?.exp;
             return actor;
         }).filter(Boolean); // 过滤掉因缺少actorId而生成的null值
@@ -217,7 +214,7 @@ export class AccountInfo {
         for (let i = 0; i < bagData.length; i++) {
             if (bagData[i].itemId) {
                 const itemInfo = itemCfg[bagData[i].itemId];
-                let item = new Item(bagData[i].itemId, itemInfo.name, itemInfo.desc, itemInfo.spriteFrame, bagData[i].itemAmount);
+                let item = new Item(bagData[i].itemId, itemInfo.name, itemInfo.desc, itemInfo.spriteFrame, bagData[i].amount);
                 this.instance._bag.set(bagData[i].itemId, item);
             }
         }
@@ -235,17 +232,11 @@ export class AccountInfo {
      */
     static async acountLevelUp(cb: () => void) {
         // 请求更新账户等级，确保当前等级与服务端同步
-        await this.requestUpdateAccountLevel(this.level, () => {
-            // 等级更新成功后，实际进行等级提升
-            this.level++;
-            // 重置经验值，因为升级后经验值应从下一级开始计算
-            this.exp = 0;
-            // 如果调用者提供了回调函数，则执行回调函数通知升级完成
-            if (cb) {
-                cb();
-            }
+        await this.requestUpdateAccountLevel(() => {
+            cb?.();
         });
     }
+
 
     /**
      * 角色升级函数
