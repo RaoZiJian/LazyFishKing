@@ -1,7 +1,7 @@
 import { BattleField } from "../BattleField";
 import { Mediator } from "../mediator/Mediator";
 import { Utils } from "../Utils";
-import { BladeWindSkill, HealingGroupSkill, JumpAttackSkill, MainSkill, SingleTauntSkill, WindMagicSkill } from "./MainSkill";
+import { BladeWindSkill, HealingGroupSkill, JumpAttackSkill, MainSkill, SingleTauntSkill, thunderChain, WindMagicSkill } from "./MainSkill";
 
 export const skillIdEnum = {
     taunt: 1,
@@ -9,6 +9,7 @@ export const skillIdEnum = {
     healingGroup: 3,
     windMagic: 4,
     bladeWind: 5,
+    thunderChain: 6
 }
 
 export class MainSkillFactory {
@@ -30,6 +31,9 @@ export class MainSkillFactory {
                 break;
             case skillIdEnum.bladeWind:
                 skill = new BladeWindSkill(id, caster, targets);
+                break;
+            case skillIdEnum.thunderChain:
+                skill = new thunderChain(id, caster, targets);
                 break;
             default:
                 break;

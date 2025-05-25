@@ -29,6 +29,7 @@ export class Mediator extends Component {
     @property(AudioSource)
     audio: AudioSource;
 
+
     private _skillAudioMap: Map<string, AudioClip> = new Map<string, AudioClip>();
     public get skillAudioMap(): Map<string, AudioClip> {
         return this._skillAudioMap;
@@ -117,6 +118,13 @@ export class Mediator extends Component {
         this._buffAudios = value;
     }
 
+    private _castingPoint: Vec3 = Vec3.ZERO;
+    public get castingPoint(): Vec3 {
+        if(this.model.getChildByName("spellsNode")){
+            this._castingPoint = this.model.getChildByName("spellsNode").worldPosition;
+        }
+        return this._castingPoint;
+    }
 
     getModelWidth(): number {
         const scaleX = Math.abs(this.model.scale.x);

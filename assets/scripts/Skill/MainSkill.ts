@@ -6,9 +6,10 @@ import GameTsCfg from "../data/client/GameTsCfg";
 import { Mediator } from "../mediator/Mediator";
 import { PoolType, ResPool } from "../ResPool";
 import { States } from "../stateMachine/StateMachine";
+import { ThunderComponent } from "../ThunderComponent";
 import { Utils } from "../Utils";
 import { Buff } from "./Buff";
-import { Animation, tween, Vec3, Node, director, AudioClip, resources } from 'cc';
+import { Animation, tween, Vec3, Node, director, AudioClip, resources, Canvas, Graphics, UITransform } from 'cc';
 
 export abstract class MainSkill {
 
@@ -525,6 +526,83 @@ export class BladeWindSkill extends MainSkill {
                     }
                 }, this.slashingDuration)
             }
+        }
+    }
+}
+
+export class thunderChain extends MainSkill {
+    private CASTING = "casting"
+    private THUNDER_AUDIO = "lightning"
+    private thunders: ThunderComponent[] = [];
+
+    private _animation: Animation;
+    private _animationDuration: number = 0;
+    public get animationDuration(): number {
+        return this._animationDuration;
+    }
+    public set animationDuration(value: number) {
+        this._animationDuration = value;
+    }
+
+    public get animation(): Animation {
+        return this._animation;
+    }
+    public set animation(value: Animation) {
+        this._animation = value;
+    }
+
+    constructor(id: number, caster: Mediator, targets: Mediator[]) {
+        super(id, caster, targets);
+        this.animation = this.caster.model.getComponent(Animation);
+        this.animationDuration = this.animation.clips.filter(clip => clip.name == this.CASTING)[0].duration;
+    }
+    getMoveTarget(): Mediator {
+        return this.targets[0];
+    }
+
+    getDamage(attacker: Mediator, defender: Mediator) {
+        return attacker.actor.attack * 3 - defender.actor.denfence;
+    }
+    async preloadRes(): Promise<void> {
+        for (let i = 0; i < 2; i++) {
+            let thunderLineNode = await ResPool.Instance.getNode(PoolType.THUNDER_LINE);
+            let thunder = thunderLineNode.getComponent(ThunderComponent);
+            thunder.setLineWidth((i + 2) * 3);
+            this.thunders.push(thunder);
+        }
+        this.duration = this.thunders[0].getDuration() > this.animationDuration ? this.thunders[0].getDuration() : this.animationDuration;
+    }
+    cast() {
+        if (this.caster && this.caster.isAlive) {
+            let target = Utils.getNextDefender(this.targets);
+            const effectLayer = this.canvas.getChildByName("EffectLayer")
+            this.animation.play(this.CASTING);
+            this.caster.audio.playOneShot(this.caster.skillAudioMap.get(this.THUNDER_AUDIO));
+            let startPosition = effectLayer.getComponent(UITransform).convertToNodeSpaceAR(this.caster.castingPoint);
+            let endPosition = effectLayer.getComponent(UITransform).convertToNodeSpaceAR(target.model.worldPosition)
+            for (let i = 0; i < this.thunders.length; i++) {
+                let thunder = this.thunders[i];
+                effectLayer.addChild(thunder.node);
+                thunder.startLightning(startPosition.x, startPosition.y, endPosition.x, endPosition.y);
+            }
+            this.canvas.getComponent(Canvas).scheduleOnce(() => {
+                let damage = this.getDamage(this.caster, target);
+                damage = damage > 0 ? damage : 1;
+                const isDead = (target.actor.hp - damage) <= 0;
+                if (!isDead) {
+                    const hurtCommand = new HurtCommand(target, damage);
+                    hurtCommand.execute();
+                } else {
+                    const deadCommand = new DeadCommand(target, this.caster);
+                    deadCommand.execute();
+                }
+                for (let i = 0; i < this.thunders.length; i++) {
+                    let thunder = this.thunders[i];
+                    thunder.node.removeFromParent();
+                    ResPool.Instance.putNode(PoolType.THUNDER_LINE, thunder.node);
+                }
+
+            }, this.duration)
         }
     }
 

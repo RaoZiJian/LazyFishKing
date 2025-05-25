@@ -1,4 +1,4 @@
-import { _decorator, Component, Label, Node, profiler, UIOpacity, Vec3 } from 'cc';
+import { _decorator, Component, director, Graphics, Label, Node, profiler, UIOpacity, Vec3 } from 'cc';
 import GameTsCfg from './data/client/GameTsCfg';
 import { Constants, LazyFishId } from './Constants';
 import { Utils } from './Utils';
@@ -9,7 +9,8 @@ import { ShootingMediator } from './mediator/ShootingMediator';
 import { FireAreaFiled } from './FireAreaFiled';
 import { AccountInfo } from './AccountInfo';
 import { FishNodePool } from './FishNodePool';
-import { ResPool } from './ResPool';
+import { PoolType, ResPool } from './ResPool';
+import { ThunderComponent } from './ThunderComponent';
 const { ccclass, property } = _decorator;
 
 @ccclass('BattleField')
@@ -78,7 +79,7 @@ export class BattleField extends Component {
             ResPool.Instance.initialize(true),
             // 带进度回调的预制体预加载
             this.preloadPrefabs(progress => {
-                this.scheduleOnce(() => { 
+                this.scheduleOnce(() => {
                     this.preloadProgress.string = `资源预加载进度：${progress.percent}%`;
                 });
             })
@@ -99,7 +100,7 @@ export class BattleField extends Component {
         // 打开触摸发动攻击的面板
         this.fireAreaField.openFire(this.rightFishes);
     }
-
+    
     /**
      * 异步预加载所有武将的prefab资源
      * 此函数的目的是在游戏开始之前加载所有必要的武将模型，以提高游戏运行时的性能

@@ -13,6 +13,7 @@ export enum LazyFishId {
     ChestMiddle = 12,
     ChestLarge = 13,
     MyActor = 14,
+    ZhangJiao = 15,
 }
 
 export const Constants = {
@@ -44,7 +45,8 @@ export const RES_URL = {
     roleItem: "popup/RoleItem",
     accountRoleItem: "popup/AccountRoleItem",
     bagScrollViewPrefab: "popup/bagScrollView",
-    bagItem: "popup/ItemNode"
+    bagItem: "popup/ItemNode",
+    thunderLine:"effects/ThunderLine"
 }
 
 export const POST_URL = {

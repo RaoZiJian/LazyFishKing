@@ -9,7 +9,8 @@ export enum PoolType {
     CLICK_BULLET = 'clickBullet',
     WIND_MAGIC = 'windMagic',
     BLADE_WIND_1 = 'bladeWind1',
-    BLADE_WIND_2 = 'bladeWind2'
+    BLADE_WIND_2 = 'bladeWind2',
+    THUNDER_LINE = 'thunderLine'
 }
 
 export type ResourceConfig = {
@@ -32,7 +33,8 @@ export class ResPool {
         { type: PoolType.CLICK_BULLET, path: RES_URL.clickBullet, preload: true, capacity: 10 },
         { type: PoolType.WIND_MAGIC, path: RES_URL.windMagic, capacity: 3 },
         { type: PoolType.BLADE_WIND_1, path: RES_URL.bladeWind1, capacity: 2 },
-        { type: PoolType.BLADE_WIND_2, path: RES_URL.bladeWind2, capacity: 2 }
+        { type: PoolType.BLADE_WIND_2, path: RES_URL.bladeWind2, capacity: 2 },
+        { type: PoolType.THUNDER_LINE, path: RES_URL.thunderLine, capacity: 3 }
     ];
 
     private constructor() {

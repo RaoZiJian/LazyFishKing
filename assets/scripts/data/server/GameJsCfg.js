@@ -246,6 +246,25 @@ module.exports ={
       "buff1": "",
       "drop": 13,
       "dropAmount": 1300
+    },
+    "15": {
+      "id": 15,
+      "name": "张角",
+      "prefab": "fishes/ZhangJiao/ZhangJiaoActor",
+      "attackType": 2,
+      "attack": 50,
+      "hurtAudio": "hurt3",
+      "deadAudio": "dying2",
+      "defence": 5,
+      "hp": 90,
+      "rage": 50,
+      "speed": 7,
+      "taunt": 20,
+      "MainSkill": 6,
+      "avatar": "fishes/Avatars/zhangjiao",
+      "buff1": "",
+      "drop": 13,
+      "dropAmount": 1500
     }
   },
   "Buff": {
@@ -1524,6 +1543,14 @@ module.exports ={
       "shouldMove": 1,
       "rageCost": 50,
       "audio": "boyHeavyHit1,bladeSlashing"
+    },
+    "6": {
+      "id": 6,
+      "name": "闪电链",
+      "buffs": "",
+      "shouldMove": 1,
+      "rageCost": 30,
+      "audio": "lightning"
     }
   },
   "Stage": {
