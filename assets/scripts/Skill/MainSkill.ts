@@ -9,7 +9,7 @@ import { States } from "../stateMachine/StateMachine";
 import { ThunderComponent } from "../ThunderComponent";
 import { Utils } from "../Utils";
 import { Buff } from "./Buff";
-import { Animation, tween, Vec3, Node, director, AudioClip, resources, Canvas, Graphics, UITransform } from 'cc';
+import { Animation, tween, Vec3, Node, director, AudioClip, resources, Canvas, Graphics, UITransform, Vec2 } from 'cc';
 
 export abstract class MainSkill {
 
@@ -536,10 +536,10 @@ export class thunderChain extends MainSkill {
 
     private _animation: Animation;
     private _animationDuration: number = 0;
-    public get animationDuration(): number {
+    public get castingDuration(): number {
         return this._animationDuration;
     }
-    public set animationDuration(value: number) {
+    public set castingDuration(value: number) {
         this._animationDuration = value;
     }
 
@@ -553,7 +553,7 @@ export class thunderChain extends MainSkill {
     constructor(id: number, caster: Mediator, targets: Mediator[]) {
         super(id, caster, targets);
         this.animation = this.caster.model.getComponent(Animation);
-        this.animationDuration = this.animation.clips.filter(clip => clip.name == this.CASTING)[0].duration;
+        this.castingDuration = this.animation.clips.filter(clip => clip.name == this.CASTING)[0].duration;
     }
     getMoveTarget(): Mediator {
         return this.targets[0];
@@ -563,47 +563,57 @@ export class thunderChain extends MainSkill {
         return attacker.actor.attack * 3 - defender.actor.denfence;
     }
     async preloadRes(): Promise<void> {
-        for (let i = 0; i < 2; i++) {
+        for (let i = 0; i < 1; i++) {
             let thunderLineNode = await ResPool.Instance.getNode(PoolType.THUNDER_LINE);
             let thunder = thunderLineNode.getComponent(ThunderComponent);
             thunder.setLineWidth((i + 2) * 3);
             this.thunders.push(thunder);
         }
-        this.duration = this.thunders[0].getDuration() > this.animationDuration ? this.thunders[0].getDuration() : this.animationDuration;
+        this.duration = this.castingDuration + this.thunders[0].getDuration();
     }
     cast() {
         if (this.caster && this.caster.isAlive) {
             let target = Utils.getNextDefender(this.targets);
-            const effectLayer = this.canvas.getChildByName("EffectLayer")
-            this.animation.play(this.CASTING);
-            this.caster.audio.playOneShot(this.caster.skillAudioMap.get(this.THUNDER_AUDIO));
-            let start = this.caster.castingPoint;
-            let end = target.model.worldPosition
-            let startPosition = effectLayer.getComponent(UITransform).convertToNodeSpaceAR(start);
-            let endPosition = effectLayer.getComponent(UITransform).convertToNodeSpaceAR(end);
-            for (let i = 0; i < this.thunders.length; i++) {
-                let thunder = this.thunders[i];
-                effectLayer.addChild(thunder.node);
-                thunder.startLightning(startPosition.x, startPosition.y, endPosition.x, endPosition.y);
-            }
-            this.canvas.getComponent(Canvas).scheduleOnce(() => {
-                let damage = this.getDamage(this.caster, target);
-                damage = damage > 0 ? damage : 1;
-                const isDead = (target.actor.hp - damage) <= 0;
-                if (!isDead) {
-                    const hurtCommand = new HurtCommand(target, damage);
-                    hurtCommand.execute();
-                } else {
-                    const deadCommand = new DeadCommand(target, this.caster);
-                    deadCommand.execute();
-                }
-                for (let i = 0; i < this.thunders.length; i++) {
-                    let thunder = this.thunders[i];
-                    thunder.node.removeFromParent();
-                    ResPool.Instance.putNode(PoolType.THUNDER_LINE, thunder.node);
-                }
+            if (target && target.isAlive) {
+                const effectLayer = this.canvas.getChildByName("EffectLayer");
+                this.animation.play(this.CASTING);
+                this.caster.audio.playOneShot(this.caster.skillAudioMap.get(this.THUNDER_AUDIO));
+                let transform = effectLayer.getComponent(UITransform);
 
-            }, this.duration)
+                this.caster.scheduleOnce(() => {
+                    let damage = this.getDamage(this.caster, target);
+                    damage = damage > 0 ? damage : 1;
+                    const isDead = (target.actor.hp - damage) <= 0;
+                    if (!isDead) {
+                        const hurtCommand = new HurtCommand(target, damage);
+                        hurtCommand.execute();
+                    } else {
+                        const deadCommand = new DeadCommand(target, this.caster);
+                        deadCommand.execute();
+                    }
+                    for (let i = 0; i < this.thunders.length; i++) {
+                        let thunder = this.thunders[i];
+                        thunder.endLightining();
+                        ResPool.Instance.putNode(PoolType.THUNDER_LINE, thunder.node);
+                    }
+
+                }, this.duration)
+
+                let startPosX = transform.convertToNodeSpaceAR(this.caster.castingPoint).x;
+                let startPosY = transform.convertToNodeSpaceAR(this.caster.castingPoint).y;
+                let endPosX = transform.convertToNodeSpaceAR(target.model.worldPosition).x;
+                let endPosY = transform.convertToNodeSpaceAR(target.model.worldPosition).y;
+
+                this.caster.scheduleOnce(() => {
+                    for (let i = 0; i < this.thunders.length; i++) {
+                        let thunder = this.thunders[i];
+                        effectLayer.addChild(thunder.node);
+                        thunder.startLightning(startPosX, startPosY, endPosX, endPosY);
+                    }
+                }, this.castingDuration);
+
+            }
+
         }
     }
 

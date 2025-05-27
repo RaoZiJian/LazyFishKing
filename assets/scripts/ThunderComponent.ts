@@ -1,4 +1,4 @@
-import { _decorator, Color, Component, Graphics, Node, tween, Vec2, Vec4 } from 'cc';
+import { _decorator, Component, Graphics,  Vec2,} from 'cc';
 const { ccclass, property } = _decorator;
 
 interface LineSegment {
@@ -25,22 +25,13 @@ export class ThunderComponent extends Component {
     repeatTimes: number = 100;
 
     //重复闪电的闪现时间
-    private _internalSpeed: number = 0.01;
-
-    //第一道闪电展开的段数
-    private _firstLightningLines: number = 10;
-
-    //第一道闪电出现后的停留时间
-    private _fistLightningStayTime: number = 0.2;
-
-    //第一道闪电展开的每条段数出现的速度
-    private _fisrtLightningLinesInternalSpeed: number = 0.1;
+    private _internalSpeed: number = 0.02;
 
     /**
      * 获取闪电持续时间，由第一道闪电的展开时间，和后面的重复闪电的连续时间组成
      */
     public getDuration(): number {
-        return this.repeatTimes * this._internalSpeed + this._firstLightningLines * this._fisrtLightningLinesInternalSpeed + this._fistLightningStayTime;
+        return this.repeatTimes * this._internalSpeed;
     }
 
     // 闪电路径缓存
@@ -53,61 +44,38 @@ export class ThunderComponent extends Component {
      * @param y2 
      */
     public startLightning(x1: number, y1: number, x2: number, y2: number) {
-        this.generateLightningPath(x1, y1, x2, y2, this.displace);
-        this.drawLightningPath(true, () => {
-            this.schedule(() => {
-                this.generateLightningPath(x1, y1, x2, y2, this.displace);
-                this.drawLightningPath(false, undefined);
-            }, this._internalSpeed, this.repeatTimes);
-        });
+        this.unscheduleAllCallbacks();
+        this.path = [];
+        this.grap.clear();
+        this.schedule(() => {
+            this.generateLightningPath(x1, y1, x2, y2, this.displace);
+            this.drawLightningPath();
+        }, this._internalSpeed, this.repeatTimes);
     }
 
     endLightining() {
         this.grap.clear();
         this.grap.node.removeFromParent();
         this.node.removeFromParent();
+        this.path = [];
     }
 
     public setLineWidth(width: number) {
         this.grap.lineWidth = width;
     }
-
-
     /**
      * 绘制闪电
-     * @param isDelay 表示闪电是否有展开的过程，isdelay:true，则闪电有展开过程，否则没有
-     * @param cb 
      */
-    public drawLightningPath(isDelay: boolean = true, cb: () => void) {
+    public drawLightningPath() {
         this.grap.clear();
         this.path.sort((a, b) => a.startPoint.x - b.startPoint.x);
-        if (isDelay) {
-            let repeatTimes = this.path.length % this._firstLightningLines == 0 ? this.path.length / this._firstLightningLines : this.path.length / this._firstLightningLines + 1;
-            let duration = repeatTimes * this._fisrtLightningLinesInternalSpeed + this._fistLightningStayTime;
-            this.schedule(() => {
-                for (let i = 0; i < this._firstLightningLines; i++) {
-                    let line = this.path.shift();
-                    if (line) {
-                        this.grap.moveTo(line.startPoint.x, line.startPoint.y);
-                        this.grap.lineTo(line.endPoint.x, line.endPoint.y);
-                    }
-                }
-                this.grap.stroke();
-            }, this._fisrtLightningLinesInternalSpeed, repeatTimes);
-            this.scheduleOnce(() => {
-                if (cb) {
-                    cb();
-                }
-            }, duration);
-        } else {
-            while (this.path.length > 0) {
-                let line = this.path.shift();
-                if (line) {
-                    this.grap.moveTo(line.startPoint.x, line.startPoint.y);
-                    this.grap.lineTo(line.endPoint.x, line.endPoint.y);
-                }
-                this.grap.stroke();
+        while (this.path.length > 0) {
+            let line = this.path.shift();
+            if (line) {
+                this.grap.moveTo(line.startPoint.x, line.startPoint.y);
+                this.grap.lineTo(line.endPoint.x, line.endPoint.y);
             }
+            this.grap.stroke();
         }
     }
 
@@ -121,7 +89,7 @@ export class ThunderComponent extends Component {
      */
     public generateLightningPath(x1: number, y1: number, x2: number, y2: number, displace: number) {
         // 清空现有路径
-        this.path.length = 0;
+        this.path = [];
 
         // 创建栈来模拟递归过程
         const stack: LineSegment[] = [];

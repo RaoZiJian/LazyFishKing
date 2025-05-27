@@ -166,12 +166,15 @@ export class HurtCommand extends Command {
                 damageComponent.label.string = this.damage.toString();
                 damageComponent.playZoomIn();
                 this.target.scheduleOnce(() => {
+                    this.complete();
                     damageComponent.playZoomOut();
                 }, this.duration)
+            }else{
+                this.complete();
             }
+        } else {
+            this.complete();
         }
-
-        this.complete();
     }
 }
 
@@ -205,15 +208,16 @@ export class DeadCommand extends Command {
 
                 this.target.scheduleOnce(() => {
                     this.target.node.removeFromParent();
+                    this.complete();
                 }, this.duration * 0.5);
 
                 this.target.scheduleOnce(() => {
                     damageComponent.playZoomOut();
                 }, this.duration * 0.5 > 0.2 ? this.duration * 0.5 : 0.3);
             }
+        } else {
+            this.complete();
         }
-
-        this.complete();
     }
     checkDropItem() {
         const battleField = director.getScene().getChildByName("Canvas").getComponentInChildren(BattleField);
@@ -224,7 +228,7 @@ export class DeadCommand extends Command {
             if (this.attacker) {
                 AccountInfo.requestDropEnemyItem(dropId, dropAmount, this.attacker.actor.id, this.attacker.actor.level, () => { });
             } else {
-                AccountInfo.requestDropEnemyItem(dropId, dropAmount, LazyFishId.MyActor, AccountInfo.level,() => { });
+                AccountInfo.requestDropEnemyItem(dropId, dropAmount, LazyFishId.MyActor, AccountInfo.level, () => { });
             }
         }
     }
