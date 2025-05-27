@@ -192,7 +192,6 @@ export class JumpAttackSkill extends MainSkill {
 
     cast() {
         if (this.caster && this.caster.isAlive) {
-            this.caster.changeState(States.CASTING);
             if (this.defender && this.defender.isAlive) {
                 this.animation.play(this.JUMP_START);
 
@@ -372,6 +371,13 @@ export class WindMagicSkill extends MainSkill {
                 this.animation.play(this.CAST_BEGIN);
                 this.caster.audio.playOneShot(this.caster.skillAudioMap.get(this.WIND_AUDIO));
                 let totalDamage = 0;
+                let healing = () => {
+                    let healingValue = totalDamage * 0.4;
+                    let currentHp = this.caster.actor.hp + healingValue;
+                    currentHp = currentHp > this.caster.actor.cfg.hp ? this.caster.actor.cfg.hp : currentHp;
+                    this.caster.setHp(currentHp);
+                    this.animation.play(this.CAST_END);
+                }
                 this.caster.scheduleOnce(() => {
                     realTargets.forEach(target => {
                         const windMagicNode = this.windMagicNodes.pop();
@@ -395,20 +401,13 @@ export class WindMagicSkill extends MainSkill {
                             }, this.windMagicDuration * 0.5)
                         }
                         totalDamage += damage;
+                        healing();
                         windMagicAnimation.scheduleOnce(() => {
                             windMagicNode.removeFromParent();
                             ResPool.Instance.putNode(PoolType.WIND_MAGIC, windMagicNode);
                         }, this.windMagicDuration)
                     })
                 }, this.castBeginDuration)
-
-                this.caster.scheduleOnce(() => {
-                    let healingValue = totalDamage * 0.4;
-                    let currentHp = this.caster.actor.hp + healingValue;
-                    currentHp = currentHp > this.caster.actor.cfg.hp ? this.caster.actor.cfg.hp : currentHp;
-                    this.caster.setHp(currentHp);
-                    this.animation.play(this.CAST_END);
-                }, this.castBeginDuration + this.windMagicDuration);
             }
         }
     }
@@ -578,8 +577,10 @@ export class thunderChain extends MainSkill {
             const effectLayer = this.canvas.getChildByName("EffectLayer")
             this.animation.play(this.CASTING);
             this.caster.audio.playOneShot(this.caster.skillAudioMap.get(this.THUNDER_AUDIO));
-            let startPosition = effectLayer.getComponent(UITransform).convertToNodeSpaceAR(this.caster.castingPoint);
-            let endPosition = effectLayer.getComponent(UITransform).convertToNodeSpaceAR(target.model.worldPosition)
+            let start = this.caster.castingPoint;
+            let end = target.model.worldPosition
+            let startPosition = effectLayer.getComponent(UITransform).convertToNodeSpaceAR(start);
+            let endPosition = effectLayer.getComponent(UITransform).convertToNodeSpaceAR(end);
             for (let i = 0; i < this.thunders.length; i++) {
                 let thunder = this.thunders[i];
                 effectLayer.addChild(thunder.node);
